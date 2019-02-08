@@ -22,6 +22,7 @@
 #include "CLI/FormatterFwd.hpp"
 #include "CLI/Macros.hpp"
 #include "CLI/Option.hpp"
+#include "CLI/Set.hpp"
 #include "CLI/Split.hpp"
 #include "CLI/StringTools.hpp"
 #include "CLI/TypeTools.hpp"
@@ -643,6 +644,27 @@ class App {
         return add_flag_function(std::move(flag_name), std::move(function), std::move(description));
     }
 #endif
+
+    /// Add set of options
+    template <typename T>
+    Option *add_cli_set(std::string option_name,
+                        T &member,   ///< The selected member of the set
+                        Set options, ///< The set of possibilities
+                        std::string description = "") {
+
+        std::string simple_name = CLI::detail::split(option_name, ',').at(0);
+
+        CLI::callback_t fun = [&member, options](CLI::results_t res) {
+            member = res[0];
+            return options.contains(member);
+        };
+
+        Option *opt = add_option(option_name, fun, description, false);
+        opt->type_name_fn([options]() {
+            return std::string(detail::type_name<T>()) + " in {" + detail::join(options.get_items()) + "}";
+        });
+        return opt;
+    }
 
     /// Add set of options (No default, temp reference, such as an inline set)
     template <typename T>
