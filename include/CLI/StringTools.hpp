@@ -163,11 +163,17 @@ inline std::string find_and_replace(std::string str, std::string from, std::stri
 }
 
 /// check if the flag definitions has possible false flags
-inline bool has_false_flags(const std::string &flags) { return (flags.find_first_of("{!") != std::string::npos); }
+inline bool has_default_flag_values(const std::string &flags) {
+    return (flags.find_first_of("{!") != std::string::npos);
+}
 
-inline void remove_false_flag_notation(std::string &flags) {
-    flags = detail::find_and_replace(flags, "{false}", std::string{});
-    flags = detail::find_and_replace(flags, "{true}", std::string{});
+inline void remove_default_flag_values(std::string &flags) {
+    size_t loc = flags.find_first_of('{');
+    while(loc != std::string::npos) {
+        auto finish = flags.find_first_of('}', loc + 1);
+        flags.erase(flags.begin() + loc, flags.begin() + finish);
+        loc = flags.find_first_of('}', loc + 1);
+    }
     flags.erase(std::remove(flags.begin(), flags.end(), '!'), flags.end());
 }
 
@@ -208,23 +214,23 @@ template <typename Callable> inline std::string find_and_modify(std::string str,
     return str;
 }
 
-/// generate a vector of values that represent a boolean  they will be either "+" or "-"
-inline std::string to_flag_value(std::string val) {
+/// convert a flag into an integer value  typically binary flags
+inline int to_flag_value(std::string val) {
     val = detail::to_lower(val);
-    std::string ret;
+    int ret;
     if(val.size() == 1) {
         switch(val[0]) {
         case '0':
         case 'f':
         case 'n':
         case '-':
-            ret = "-1";
+            ret = -1;
             break;
         case '1':
         case 't':
         case 'y':
         case '+':
-            ret = "1";
+            ret = 1;
             break;
         case '2':
         case '3':
@@ -234,7 +240,7 @@ inline std::string to_flag_value(std::string val) {
         case '7':
         case '8':
         case '9':
-            ret = val;
+            ret = val[0] - '0';
             break;
         default:
             throw std::invalid_argument("unrecognized character");
@@ -242,12 +248,11 @@ inline std::string to_flag_value(std::string val) {
         return ret;
     }
     if(val == "true" || val == "on" || val == "yes" || val == "enable") {
-        ret = "1";
+        ret = 1;
     } else if(val == "false" || val == "off" || val == "no" || val == "disable") {
-        ret = "-1";
+        ret = -1;
     } else {
-        auto ui = std::stoll(val);
-        ret = (ui == 0) ? "-1" : val;
+        ret = std::stoll(val);
     }
     return ret;
 }

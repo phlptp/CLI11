@@ -565,11 +565,11 @@ class App {
             detail::sum_flag_vector(res, flag_count);
             return true;
         };
-        if(detail::has_false_flags(flag_name)) {
-            std::vector<std::string> neg = detail::get_false_flags(flag_name);
-            detail::remove_false_flag_notation(flag_name);
+        if(detail::has_default_flag_values(flag_name)) {
+            auto flag_defaults = detail::get_default_flag_values(flag_name);
+            detail::remove_default_flag_values(flag_name);
             opt = add_option(flag_name, fun, description, false);
-            opt->fnames_ = std::move(neg);
+            opt->fnames_ = std::move(flag_defaults);
         } else {
             opt = add_option(flag_name, fun, description, false);
         }
@@ -580,23 +580,22 @@ class App {
         return opt;
     }
 
-    /// Bool version - defaults to allowing multiple passings, but can be forced to one if
+    /// Other type version - defaults to allowing multiple passings, but can be forced to one if
     /// `multi_option_policy(CLI::MultiOptionPolicy::Throw)` is used.
-    template <typename T, enable_if_t<is_bool<T>::value, detail::enabler> = detail::dummy>
+    template <typename T, enable_if_t<!std::is_integral<T>::value, detail::enabler> = detail::dummy>
     Option *add_flag(std::string flag_name,
                      T &flag_result, ///< A variable holding true if passed
                      std::string description = "") {
         flag_result = false;
         Option *opt;
         CLI::callback_t fun = [&flag_result](CLI::results_t res) {
-            flag_result = (res[0][0] != '-');
-            return res.size() == 1;
+            return CLI::detail::lexical_cast(res[0], flag_result);
         };
-        if(detail::has_false_flags(flag_name)) {
-            std::vector<std::string> neg = detail::get_false_flags(flag_name);
-            detail::remove_false_flag_notation(flag_name);
+        if(detail::has_default_flag_values(flag_name)) {
+            auto flag_defaults = detail::get_default_flag_values(flag_name);
+            detail::remove_default_flag_values(flag_name);
             opt = add_option(flag_name, fun, std::move(description), false);
-            opt->fnames_ = std::move(neg);
+            opt->fnames_ = std::move(flag_defaults);
         } else {
             opt = add_option(flag_name, fun, std::move(description), false);
         }
@@ -620,11 +619,11 @@ class App {
             return true;
         };
         Option *opt;
-        if(detail::has_false_flags(flag_name)) {
-            std::vector<std::string> neg = detail::get_false_flags(flag_name);
-            detail::remove_false_flag_notation(flag_name);
+        if(detail::has_default_flag_values(flag_name)) {
+            auto flag_defaults = detail::get_default_flag_values(flag_name);
+            detail::remove_default_flag_values(flag_name);
             opt = add_option(flag_name, fun, std::move(description), false);
-            opt->fnames_ = std::move(neg);
+            opt->fnames_ = std::move(flag_defaults);
         } else {
             opt = add_option(flag_name, fun, std::move(description), false);
         }

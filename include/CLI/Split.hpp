@@ -67,22 +67,28 @@ inline std::vector<std::string> split_names(std::string current) {
     return output;
 }
 
-/// extract negation arguments basically everything after a '|' and before the next comma
-inline std::vector<std::string> get_false_flags(const std::string &str) {
-    std::vector<std::string> output = split_names(str);
-    output.erase(std::remove_if(output.begin(),
-                                output.end(),
-                                [](const std::string &name) {
-                                    return ((name.empty()) ||
-                                            ((name.find("{false}") == std::string::npos) && (name[0] != '!')));
-                                }),
-                 output.end());
-    for(auto &flag : output) {
-        auto false_loc = flag.find("{false}");
-        if(false_loc != std::string::npos) {
-            flag.erase(false_loc, std::string::npos);
+/// extract default flag values either {def} or starting with a !
+inline std::vector<std::pair<std::string, std::string>> get_default_flag_values(const std::string &str) {
+    std::vector<std::string> flags = split_names(str);
+    flags.erase(std::remove_if(flags.begin(),
+                               flags.end(),
+                               [](const std::string &name) {
+                                   return ((name.empty()) || (!(((name.find_first_of('{') != std::string::npos) &&
+                                                                 (name.back() == '}')) ||
+                                                                (name[0] != '!'))));
+                               }),
+                flags.end());
+    std::vector<std::pair<std::string, std::string>> output;
+    output.reserve(flags.size);
+    for(auto &flag : flags) {
+        auto def_start = flag.find_first_of('{');
+        std::string defval = "-1";
+        if((def_start != std::string::npos) && (flag.back() == '}')) {
+            defval = flag.substr(def_start + 1);
+            flag.erase(def_start, std::string::npos);
         }
         flag.erase(0, flag.find_first_not_of("-!"));
+        output.emplace_back(flag, defval);
     }
     return output;
 }
