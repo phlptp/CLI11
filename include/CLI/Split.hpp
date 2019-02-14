@@ -40,7 +40,7 @@ inline bool split_long(const std::string &current, std::string &name, std::strin
 }
 
 // Returns false if not a windows style option. Otherwise, sets opt name and value and returns true
-inline bool split_windows(const std::string &current, std::string &name, std::string &value) {
+inline bool split_windows_style(const std::string &current, std::string &name, std::string &value) {
     if(current.size() > 1 && current[0] == '/' && valid_first_char(current[1])) {
         auto loc = current.find_first_of(':');
         if(loc != std::string::npos) {
@@ -75,16 +75,17 @@ inline std::vector<std::pair<std::string, std::string>> get_default_flag_values(
                                [](const std::string &name) {
                                    return ((name.empty()) || (!(((name.find_first_of('{') != std::string::npos) &&
                                                                  (name.back() == '}')) ||
-                                                                (name[0] != '!'))));
+                                                                (name[0] == '!'))));
                                }),
                 flags.end());
     std::vector<std::pair<std::string, std::string>> output;
-    output.reserve(flags.size);
+    output.reserve(flags.size());
     for(auto &flag : flags) {
         auto def_start = flag.find_first_of('{');
-        std::string defval = "-1";
+        std::string defval = "false";
         if((def_start != std::string::npos) && (flag.back() == '}')) {
             defval = flag.substr(def_start + 1);
+            defval.pop_back();
             flag.erase(def_start, std::string::npos);
         }
         flag.erase(0, flag.find_first_not_of("-!"));

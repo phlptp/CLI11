@@ -132,13 +132,7 @@ template <typename T, enable_if_t<is_bool<T>::value, detail::enabler> = detail::
 bool lexical_cast(std::string input, T &output) {
     try {
         auto out = to_flag_value(input);
-        if(out == "1") {
-            output = true;
-        } else if(out == "-1") {
-            output = false;
-        } else {
-            output = (std::stoll(out) > 0);
-        }
+        output = (out > 0);
         return true;
     } catch(const std::invalid_argument &) {
         return false;
@@ -190,10 +184,8 @@ template <typename T,
           enable_if_t<std::is_integral<T>::value && std::is_unsigned<T>::value, detail::enabler> = detail::dummy>
 void sum_flag_vector(const std::vector<std::string> &flags, T &output) {
     int64_t count{0};
-    static const auto trueString = std::string("1");
-    static const auto falseString = std::string("-1");
     for(auto &flag : flags) {
-        count += (flag == trueString) ? 1 : ((flag == falseString) ? (-1) : std::stoll(flag));
+        count += detail::to_flag_value(flag);
     }
     output = (count > 0) ? static_cast<T>(count) : T{0};
 }
@@ -206,10 +198,8 @@ template <typename T,
           enable_if_t<std::is_integral<T>::value && std::is_signed<T>::value, detail::enabler> = detail::dummy>
 void sum_flag_vector(const std::vector<std::string> &flags, T &output) {
     int64_t count{0};
-    static const auto trueString = std::string("1");
-    static const auto falseString = std::string("-1");
     for(auto &flag : flags) {
-        count += (flag == trueString) ? 1 : ((flag == falseString) ? (-1) : std::stoll(flag));
+        count += detail::to_flag_value(flag);
     }
     output = static_cast<T>(count);
 }

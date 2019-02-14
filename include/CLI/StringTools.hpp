@@ -118,7 +118,7 @@ inline std::ostream &format_help(std::ostream &out, std::string name, std::strin
 }
 
 /// Verify the first character of an option
-template <typename T> bool valid_first_char(T c) { return std::isalpha(c, std::locale()) || c == '_'; }
+template <typename T> bool valid_first_char(T c) { return std::isalnum(c, std::locale()) || c == '_'; }
 
 /// Verify following characters of an option
 template <typename T> bool valid_later_char(T c) {
@@ -170,38 +170,43 @@ inline bool has_default_flag_values(const std::string &flags) {
 inline void remove_default_flag_values(std::string &flags) {
     size_t loc = flags.find_first_of('{');
     while(loc != std::string::npos) {
-        auto finish = flags.find_first_of('}', loc + 1);
-        flags.erase(flags.begin() + loc, flags.begin() + finish);
-        loc = flags.find_first_of('}', loc + 1);
+        auto finish = flags.find_first_of("},", loc + 1);
+        if((finish != std::string::npos) && (flags[finish] == '}')) {
+            flags.erase(flags.begin() + loc, flags.begin() + finish + 1);
+        }
+        loc = flags.find_first_of('{', loc + 1);
     }
     flags.erase(std::remove(flags.begin(), flags.end(), '!'), flags.end());
 }
 
 /// Check if a string is a member of a list of strings and optionally ignore case or ignore underscores
-inline bool check_is_member(std::string name,
-                            const std::vector<std::string> names,
-                            bool ignore_case = false,
-                            bool ignore_underscore = false) {
+inline std::ptrdiff_t find_member(std::string name,
+                                  const std::vector<std::string> names,
+                                  bool ignore_case = false,
+                                  bool ignore_underscore = false) {
+    auto it = std::end(names);
     if(ignore_case) {
         if(ignore_underscore) {
             name = detail::to_lower(detail::remove_underscore(name));
-            return std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
-                       return detail::to_lower(detail::remove_underscore(local_name)) == name;
-                   }) != std::end(names);
+            it = std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
+                return detail::to_lower(detail::remove_underscore(local_name)) == name;
+            });
         } else {
             name = detail::to_lower(name);
-            return std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
-                       return detail::to_lower(local_name) == name;
-                   }) != std::end(names);
+            it = std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
+                return detail::to_lower(local_name) == name;
+            });
         }
 
     } else if(ignore_underscore) {
         name = detail::remove_underscore(name);
-        return std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
-                   return detail::remove_underscore(local_name) == name;
-               }) != std::end(names);
+        it = std::find_if(std::begin(names), std::end(names), [&name](std::string local_name) {
+            return detail::remove_underscore(local_name) == name;
+        });
     } else
-        return std::find(std::begin(names), std::end(names), name) != std::end(names);
+        it = std::find(std::begin(names), std::end(names), name);
+
+    return (it != std::end(names)) ? (it - std::begin(names)) : (-1);
 }
 
 /// Find a trigger string and call a modify callable function that takes the current string and starting position of the
@@ -215,9 +220,17 @@ template <typename Callable> inline std::string find_and_modify(std::string str,
 }
 
 /// convert a flag into an integer value  typically binary flags
-inline int to_flag_value(std::string val) {
+inline int64_t to_flag_value(std::string val) {
+    static const std::string trueString("true");
+    static const std::string falseString("false");
+    if(val == trueString) {
+        return 1;
+    }
+    if(val == falseString) {
+        return -1;
+    }
     val = detail::to_lower(val);
-    int ret;
+    int64_t ret;
     if(val.size() == 1) {
         switch(val[0]) {
         case '0':
@@ -247,9 +260,9 @@ inline int to_flag_value(std::string val) {
         }
         return ret;
     }
-    if(val == "true" || val == "on" || val == "yes" || val == "enable") {
+    if(val == trueString || val == "on" || val == "yes" || val == "enable") {
         ret = 1;
-    } else if(val == "false" || val == "off" || val == "no" || val == "disable") {
+    } else if(val == falseString || val == "off" || val == "no" || val == "disable") {
         ret = -1;
     } else {
         ret = std::stoll(val);

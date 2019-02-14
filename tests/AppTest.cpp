@@ -1064,9 +1064,9 @@ TEST_F(TApp, CallbackFlags) {
 }
 
 TEST_F(TApp, CallbackFlagsFalse) {
-    int value = 0;
+    int64_t value = 0;
 
-    auto func = [&value](int x) { value = x; };
+    auto func = [&value](int64_t x) { value = x; };
 
     app.add_flag_function("-v,-f{false},--val,--fval{false}", func);
 
@@ -1093,9 +1093,9 @@ TEST_F(TApp, CallbackFlagsFalse) {
 }
 
 TEST_F(TApp, CallbackFlagsFalseShortcut) {
-    int value = 0;
+    int64_t value = 0;
 
-    auto func = [&value](int x) { value = x; };
+    auto func = [&value](int64_t x) { value = x; };
 
     app.add_flag_function("-v,!-f,--val,!--fval", func);
 
@@ -1602,7 +1602,6 @@ TEST_F(TApp, AllowExtras) {
 
     bool val = true;
     app.add_flag("-f", val);
-    EXPECT_FALSE(val);
 
     args = {"-x", "-f"};
 
@@ -1751,7 +1750,7 @@ TEST_F(TApp, RepeatingMultiArgumentOptions) {
 // #122
 TEST_F(TApp, EmptyOptionEach) {
     std::string q;
-    app.add_option("--each", {})->each([&q](std::string s) { q = s; });
+    app.add_option("--each")->each([&q](std::string s) { q = s; });
 
     args = {"--each", "that"};
     run();
@@ -1762,7 +1761,7 @@ TEST_F(TApp, EmptyOptionEach) {
 // #122
 TEST_F(TApp, EmptyOptionFail) {
     std::string q;
-    app.add_option("--each", {});
+    app.add_option("--each");
 
     args = {"--each", "that"};
     run();
