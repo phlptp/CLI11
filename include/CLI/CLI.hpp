@@ -26,8 +26,6 @@
 
 #include "CLI/FormatterFwd.hpp"
 
-#include "CLI/Set.hpp"
-
 #include "CLI/Option.hpp"
 
 #include "CLI/App.hpp"

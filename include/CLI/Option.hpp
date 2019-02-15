@@ -304,7 +304,9 @@ class Option : public OptionBase<Option> {
     /// Adds a validator with a built in type name
     Option *check(const Validator &validator) {
         validators_.emplace_back(validator.func);
-        if(!validator.tname.empty())
+        if(validator.tname_function)
+            type_name_fn(validator.tname_function);
+        else if(!validator.tname.empty())
             type_name(validator.tname);
         return this;
     }

@@ -1071,7 +1071,7 @@ TEST_F(TApp, CallbackFlagsFalse) {
     app.add_flag_function("-v,-f{false},--val,--fval{false}", func);
 
     run();
-    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(value, 0);
 
     args = {"-f"};
     run();
@@ -1100,7 +1100,7 @@ TEST_F(TApp, CallbackFlagsFalseShortcut) {
     app.add_flag_function("-v,!-f,--val,!--fval", func);
 
     run();
-    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(value, 0);
 
     args = {"-f"};
     run();

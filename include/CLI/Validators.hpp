@@ -3,6 +3,7 @@
 // Distributed under the 3-Clause BSD License.  See accompanying
 // file LICENSE or https://github.com/CLIUtils/CLI11 for details.
 
+#include "CLI/StringTools.hpp"
 #include "CLI/TypeTools.hpp"
 
 #include <functional>
@@ -30,6 +31,9 @@ namespace CLI {
 struct Validator {
     /// This is the type name, if empty the type name will not be changed
     std::string tname;
+
+    /// This is the type function, if empty the tname will be used
+    std::function<std::string()> tname_function;
 
     /// This it the base function that is to be called.
     /// Returns a string error message if validation fails.
@@ -239,6 +243,65 @@ struct Range : public Validator {
     /// Range of one value is 0 to value
     template <typename T> explicit Range(T max) : Range(static_cast<T>(0), max) {}
 };
+
+/// Verify items are in a set
+struct IsMember : public Validator {
+    using filter_fn_t = std::function<std::string(std::string)>;
+
+    /// This checks to see if an item is in a set: pointer version. The pointer-like must be copyable. (Normal pointers
+    /// and shared pointers by default).
+    ///
+    /// Note that the constructor is templated, but the struct is not, so C++17 is not
+    /// needed to provide nice syntax for IsMember(set).
+    template <typename T,
+              enable_if_t<is_copyable_ptr<T>::value || std::is_pointer<T>::value, detail::enabler> = detail::dummy>
+    IsMember(
+        T set, filter_fn_t filter_fn = [](const std::string a) { return a; }) {
+
+        tname_function = [set]() {
+            std::stringstream out;
+            out << detail::type_name<T>() << " in {" << detail::join(*set, ", ") << "}";
+            return out.str();
+        };
+
+        func = [set, filter_fn](std::string input) {
+            if(std::find_if(std::begin(*set), std::end(*set), [filter_fn, input](std::string a) {
+                   a = filter_fn(a);
+                   std::string b = filter_fn(input);
+                   return a == b;
+               }) == std::end(*set))
+                return "Value " + input + " not in {" + detail::join(*set, ", ") + "}";
+
+            return std::string();
+        };
+    }
+
+    /// This checks to see if an item is in a set: non-pointer version.
+    ///
+    /// Internally copies into a shared pointer and sends it
+    /// through the next constructor to avoid duplicating logic.
+    template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy, typename... Args>
+    IsMember(T set, Args &&... other) : IsMember(std::make_shared<T>(set), other...) {}
+
+    /// Shortcut to allow inplace initilizer lists to be used as sets.
+    ///
+    /// Vector used internally to ensure order preservation.
+    template <typename... Args>
+    IsMember(std::initializer_list<std::string> items, Args &&... other)
+        : IsMember(std::vector<std::string>(items), other...) {}
+
+    /// You can pass in as many filter functions as you like, they nest
+    template <typename T, typename... Args>
+    IsMember(T set, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
+        : IsMember(
+              set, [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); }, other...) {}
+};
+
+/// Helper function to allow ignore_case to be passed to IsMember
+inline std::string ignore_case(std::string item) { return detail::to_lower(item); }
+
+/// Helper function to allow ignore_underscore to be passed to IsMember
+inline std::string ignore_underscore(std::string item) { return detail::remove_underscore(item); }
 
 namespace detail {
 /// Split a string into a program name and command line arguments
