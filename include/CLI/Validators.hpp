@@ -274,19 +274,18 @@ class IsMember : public Validator {
     explicit IsMember(std::shared_ptr<T> set)
         : IsMember(set, std::function<typename T::value_type(typename T::value_type)>{}) {}
 
+    /// This checks to see if an item is in a set: pointer version. (Empty function)
     template <typename T, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set)
         : IsMember(set,
                    std::function<typename std::remove_pointer<T>::type::value_type(
                        typename std::remove_pointer<T>::type::value_type)>{}) {}
 
+    /// This checks to see if an item is in a set: copy version. (Empty function)
     template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set) : IsMember(set, std::function<typename T::value_type(typename T::value_type)>()) {}
 
     /// This checks to see if an item is in a set: shared_pointer version.
-    ///
-    /// Note that the constructor is templated, but the struct is not, so C++17 is not
-    /// needed to provide nice syntax for IsMember(set).
     template <typename T, typename F> explicit IsMember(std::shared_ptr<T> set, F filter_function) {
 
         using item_t = typename T::value_type;
@@ -326,9 +325,6 @@ class IsMember : public Validator {
     }
 
     /// This checks to see if an item is in a set: pointer version.
-    ///
-    /// Note that the constructor is templated, but the struct is not, so C++17 is not
-    /// needed to provide nice syntax for IsMember(set).
     template <typename T, typename F, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set, F filter_function) {
         using item_t = typename std::remove_pointer<T>::type::value_type;
@@ -368,9 +364,6 @@ class IsMember : public Validator {
     }
 
     /// This checks to see if an item is in a set: copy version.
-    ///
-    /// Note that the constructor is templated, but the struct is not, so C++17 is not
-    /// needed to provide nice syntax for IsMember(set).
     template <typename T, typename F, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set, F filter_function) {
         using item_t = typename T::value_type;
@@ -445,6 +438,7 @@ inline std::pair<std::string, std::string> split_program_name(std::string comman
     ltrim(vals.second);
     return vals;
 }
+
 } // namespace detail
 /// @}
 
