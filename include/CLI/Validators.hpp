@@ -307,13 +307,6 @@ struct IsMember : public Validator {
     template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy, typename... Args>
     explicit IsMember(T set, Args &&... other) : IsMember(std::make_shared<T>(set), other...) {}
 
-    /// Shortcut to allow inplace initilizer lists to be used as sets.
-    ///
-    /// Vector used internally to ensure order preservation.
-    template <typename... Args>
-    explicit IsMember(std::initializer_list<std::string> items, Args &&... other)
-        : IsMember(std::vector<std::string>(items), other...) {}
-
     /// You can pass in as many filter functions as you like, they nest
     template <typename T, typename... Args>
     IsMember(T set, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
