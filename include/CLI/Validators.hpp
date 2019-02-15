@@ -37,11 +37,19 @@ struct Validator {
 
     /// This it the base function that is to be called.
     /// Returns a string error message if validation fails.
-    std::function<std::string(const std::string &)> func;
+    std::function<std::string(std::string &)> func;
+
+  public:
+    /// This is the required operator for a validator - provided to help
+    /// users (CLI11 uses the member `func` directly)
+    std::string operator()(std::string &str) const { return func(str); };
 
     /// This is the required operator for a validator - provided to help
     /// users (CLI11 uses the member `func` directly)
-    std::string operator()(const std::string &str) const { return func(str); };
+    std::string operator()(const std::string &str) const {
+        std::string value = str;
+        return func(value);
+    };
 
     /// Combining validators is a new validator
     Validator operator&(const Validator &other) const {
@@ -49,10 +57,10 @@ struct Validator {
         newval.tname = (tname == other.tname ? tname : "");
 
         // Give references (will make a copy in lambda function)
-        const std::function<std::string(const std::string &filename)> &f1 = func;
-        const std::function<std::string(const std::string &filename)> &f2 = other.func;
+        const std::function<std::string(std::string & filename)> &f1 = func;
+        const std::function<std::string(std::string & filename)> &f2 = other.func;
 
-        newval.func = [f1, f2](const std::string &filename) {
+        newval.func = [f1, f2](std::string &filename) {
             std::string s1 = f1(filename);
             std::string s2 = f2(filename);
             if(!s1.empty() && !s2.empty())
@@ -69,10 +77,10 @@ struct Validator {
         newval.tname = (tname == other.tname ? tname : "");
 
         // Give references (will make a copy in lambda function)
-        const std::function<std::string(const std::string &filename)> &f1 = func;
-        const std::function<std::string(const std::string &filename)> &f2 = other.func;
+        const std::function<std::string(std::string & filename)> &f1 = func;
+        const std::function<std::string(std::string & filename)> &f2 = other.func;
 
-        newval.func = [f1, f2](const std::string &filename) {
+        newval.func = [f1, f2](std::string &filename) {
             std::string s1 = f1(filename);
             std::string s2 = f2(filename);
             if(s1.empty() || s2.empty())
@@ -93,7 +101,7 @@ namespace detail {
 struct ExistingFileValidator : public Validator {
     ExistingFileValidator() {
         tname = "FILE";
-        func = [](const std::string &filename) {
+        func = [](std::string &filename) {
             struct stat buffer;
             bool exist = stat(filename.c_str(), &buffer) == 0;
             bool is_dir = (buffer.st_mode & S_IFDIR) != 0;
@@ -111,7 +119,7 @@ struct ExistingFileValidator : public Validator {
 struct ExistingDirectoryValidator : public Validator {
     ExistingDirectoryValidator() {
         tname = "DIR";
-        func = [](const std::string &filename) {
+        func = [](std::string &filename) {
             struct stat buffer;
             bool exist = stat(filename.c_str(), &buffer) == 0;
             bool is_dir = (buffer.st_mode & S_IFDIR) != 0;
@@ -129,7 +137,7 @@ struct ExistingDirectoryValidator : public Validator {
 struct ExistingPathValidator : public Validator {
     ExistingPathValidator() {
         tname = "PATH";
-        func = [](const std::string &filename) {
+        func = [](std::string &filename) {
             struct stat buffer;
             bool const exist = stat(filename.c_str(), &buffer) == 0;
             if(!exist) {
@@ -144,7 +152,7 @@ struct ExistingPathValidator : public Validator {
 struct NonexistentPathValidator : public Validator {
     NonexistentPathValidator() {
         tname = "PATH";
-        func = [](const std::string &filename) {
+        func = [](std::string &filename) {
             struct stat buffer;
             bool exist = stat(filename.c_str(), &buffer) == 0;
             if(exist) {
@@ -159,7 +167,7 @@ struct NonexistentPathValidator : public Validator {
 struct IPV4Validator : public Validator {
     IPV4Validator() {
         tname = "IPV4";
-        func = [](const std::string &ip_addr) {
+        func = [](std::string &ip_addr) {
             auto result = CLI::detail::split(ip_addr, '.');
             if(result.size() != 4) {
                 return "Invalid IPV4 address must have four parts " + ip_addr;
@@ -184,7 +192,7 @@ struct IPV4Validator : public Validator {
 struct PositiveNumber : public Validator {
     PositiveNumber() {
         tname = "POSITIVE";
-        func = [](const std::string &number_str) {
+        func = [](std::string &number_str) {
             int number;
             if(!detail::lexical_cast(number_str, number)) {
                 return "Failed parsing number " + number_str;
@@ -230,7 +238,7 @@ struct Range : public Validator {
         out << detail::type_name<T>() << " in [" << min << " - " << max << "]";
 
         tname = out.str();
-        func = [min, max](std::string input) {
+        func = [min, max](std::string &input) {
             T val;
             detail::lexical_cast(input, val);
             if(val < min || val > max)
@@ -265,22 +273,30 @@ struct IsMember : public Validator {
             return out.str();
         };
 
-        func = [set, filter_fn](std::string input) {
-            if(std::find_if(std::begin(*set), std::end(*set), [filter_fn, input](item_t v) {
-                   item_t a = v;
-                   item_t b;
-                   if(!detail::lexical_cast(input, b))
-                       throw ConversionError(input); // name is added later
+        func = [set, filter_fn](std::string &input) {
+            auto result = std::find_if(std::begin(*set), std::end(*set), [filter_fn, input](item_t v) {
+                item_t a = v;
+                item_t b;
+                if(!detail::lexical_cast(input, b))
+                    throw ConversionError(input); // name is added later
 
-                   if(filter_fn) {
-                       a = filter_fn(a);
-                       b = filter_fn(b);
-                   }
-                   return a == b;
-               }) == std::end(*set))
-                return "Value " + input + " not in {" + detail::join(*set, ",") + "}";
+                if(filter_fn) {
+                    a = filter_fn(a);
+                    b = filter_fn(b);
+                }
+                return a == b;
+            });
 
-            return std::string();
+            if(result == std::end(*set)) {
+                return input + " not in {" + detail::join(*set, ",") + "}";
+            } else {
+                // Make sure the version in the input string is identical to the one in the set
+                // Requires std::stringstream << be supported on T.
+                std::stringstream out;
+                out << *result;
+                input = out.str();
+                return std::string();
+            }
         };
     }
 

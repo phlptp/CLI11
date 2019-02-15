@@ -1328,7 +1328,7 @@ TEST_F(TApp, InSet) {
     EXPECT_EQ("two", choice);
 
     args = {"--quick", "four"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, InSetWithDefault) {
@@ -1362,7 +1362,7 @@ TEST_F(TApp, InCaselessSetWithDefault) {
     EXPECT_EQ("two", choice);
 
     args = {"--quick", "four"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, InIntSet) {
@@ -1376,7 +1376,7 @@ TEST_F(TApp, InIntSet) {
     EXPECT_EQ(2, choice);
 
     args = {"--quick", "4"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, InIntSetWindows) {
@@ -1388,6 +1388,9 @@ TEST_F(TApp, InIntSetWindows) {
 
     run();
     EXPECT_EQ(2, choice);
+
+    args = {"/q", "4"};
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"/q4"};
     EXPECT_THROW(run(), CLI::ExtrasError);
@@ -1437,7 +1440,7 @@ TEST_F(TApp, InSetIgnoreCase) {
     EXPECT_EQ("THREE", choice); // Keeps caps from set
 
     args = {"--quick", "four"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--quick=one", "--quick=two"};
     EXPECT_THROW(run(), CLI::ArgumentMismatch);
@@ -1463,7 +1466,7 @@ TEST_F(TApp, InSetIgnoreCaseMutableValue) {
 
     options.clear();
     args = {"--quick", "ThrEE"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, InSetIgnoreCasePointer) {
@@ -1490,7 +1493,7 @@ TEST_F(TApp, InSetIgnoreCasePointer) {
     EXPECT_EQ("THREE", choice); // this does not throw a segfault
 
     args = {"--quick", "four"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--quick=one", "--quick=two"};
     EXPECT_THROW(run(), CLI::ArgumentMismatch);
@@ -1514,7 +1517,7 @@ TEST_F(TApp, InSetIgnoreUnderscore) {
     EXPECT_EQ("optionthree", choice); // no underscore
 
     args = {"--quick", "Option4"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--quick=option_one", "--quick=option_two"};
     EXPECT_THROW(run(), CLI::ArgumentMismatch);
@@ -1538,7 +1541,7 @@ TEST_F(TApp, InSetIgnoreCaseUnderscore) {
     EXPECT_EQ("OptionThree", choice); // no underscore
 
     args = {"--quick", "Option4"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--quick=option_one", "--quick=option_two"};
     EXPECT_THROW(run(), CLI::ArgumentMismatch);
@@ -2015,7 +2018,7 @@ TEST_F(TApp, AddRemoveSetItems) {
     EXPECT_EQ(type2, "TYPE7");
 
     args = {"--type1", "TYPE1"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--type2", "TYPE2"};
     EXPECT_THROW(run(), CLI::ValidationError);
@@ -2046,10 +2049,10 @@ TEST_F(TApp, AddRemoveSetItemsNoCase) {
     EXPECT_EQ(type2, "TYPE7");
 
     args = {"--type1", "TYPe1"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 
     args = {"--type2", "TYpE2"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 // #128
