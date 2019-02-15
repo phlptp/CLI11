@@ -608,7 +608,14 @@ class Option : public OptionBase<Option> {
         if(!validators_.empty()) {
             for(std::string &result : results_)
                 for(const std::function<std::string(std::string &)> &vali : validators_) {
-                    std::string err_msg = vali(result);
+                    std::string err_msg;
+
+                    try {
+                        err_msg = vali(result);
+                    } catch(const ConversionError &err) {
+                        throw ConversionError(err.what(), get_name());
+                    }
+
                     if(!err_msg.empty())
                         throw ValidationError(get_name(), err_msg);
                 }

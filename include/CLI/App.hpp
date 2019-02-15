@@ -696,23 +696,8 @@ class App {
                     std::string description,
                     bool defaulted) {
 
-        std::string simple_name = CLI::detail::split(option_name, ',').at(0);
-        CLI::callback_t fun = [&member, options, simple_name](CLI::results_t res) {
-            bool retval = detail::lexical_cast(res[0], member);
-            if(!retval)
-                throw ConversionError(res[0], simple_name);
-            return std::find(std::begin(options), std::end(options), member) != std::end(options);
-        };
-
-        Option *opt = add_option(option_name, std::move(fun), std::move(description), defaulted);
-        std::string typeval = detail::type_name<T>();
-        typeval += " in {" + detail::join(options) + "}";
-        opt->type_name(typeval);
-        if(defaulted) {
-            std::stringstream out;
-            out << member;
-            opt->default_str(out.str());
-        }
+        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        opt->check(IsMember(options));
         return opt;
     }
 
@@ -724,22 +709,8 @@ class App {
                             std::string description,
                             bool defaulted) {
 
-        std::string simple_name = CLI::detail::split(option_name, ',').at(0);
-        CLI::callback_t fun = [&member, &options, simple_name](CLI::results_t res) {
-            bool retval = detail::lexical_cast(res[0], member);
-            if(!retval)
-                throw ConversionError(res[0], simple_name);
-            return std::find(std::begin(options), std::end(options), member) != std::end(options);
-        };
-
-        Option *opt = add_option(option_name, std::move(fun), std::move(description), defaulted);
-        opt->type_name_fn(
-            [&options]() { return std::string(detail::type_name<T>()) + " in {" + detail::join(options) + "}"; });
-        if(defaulted) {
-            std::stringstream out;
-            out << member;
-            opt->default_str(out.str());
-        }
+        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        opt->check(IsMember(&options));
         return opt;
     }
 

@@ -253,24 +253,32 @@ struct IsMember : public Validator {
     ///
     /// Note that the constructor is templated, but the struct is not, so C++17 is not
     /// needed to provide nice syntax for IsMember(set).
-    template <typename T,
-              enable_if_t<is_copyable_ptr<T>::value || std::is_pointer<T>::value, detail::enabler> = detail::dummy>
-    IsMember(
-        T set, filter_fn_t filter_fn = [](const std::string a) { return a; }) {
+    template <typename T, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
+    IsMember(T set,
+             std::function<typename std::decay<decltype(*set)>::type::value_type(
+                 typename std::decay<decltype(*set)>::type::value_type)> filter_fn = {}) {
+        using item_t = typename std::decay<decltype(*set)>::type::value_type;
 
         tname_function = [set]() {
             std::stringstream out;
-            out << detail::type_name<T>() << " in {" << detail::join(*set, ", ") << "}";
+            out << detail::type_name<item_t>() << " in {" << detail::join(*set, ",") << "}";
             return out.str();
         };
 
         func = [set, filter_fn](std::string input) {
-            if(std::find_if(std::begin(*set), std::end(*set), [filter_fn, input](std::string a) {
-                   a = filter_fn(a);
-                   std::string b = filter_fn(input);
+            if(std::find_if(std::begin(*set), std::end(*set), [filter_fn, input](item_t v) {
+                   item_t a = v;
+                   item_t b;
+                   if(!detail::lexical_cast(input, b))
+                       throw ConversionError(input); // name is added later
+
+                   if(filter_fn) {
+                       a = filter_fn(a);
+                       b = filter_fn(b);
+                   }
                    return a == b;
                }) == std::end(*set))
-                return "Value " + input + " not in {" + detail::join(*set, ", ") + "}";
+                return "Value " + input + " not in {" + detail::join(*set, ",") + "}";
 
             return std::string();
         };

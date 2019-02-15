@@ -1345,7 +1345,7 @@ TEST_F(TApp, InSetWithDefault) {
     EXPECT_EQ("two", choice);
 
     args = {"--quick", "four"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, InCaselessSetWithDefault) {
@@ -2018,7 +2018,7 @@ TEST_F(TApp, AddRemoveSetItems) {
     EXPECT_THROW(run(), CLI::ConversionError);
 
     args = {"--type2", "TYPE2"};
-    EXPECT_THROW(run(), CLI::ConversionError);
+    EXPECT_THROW(run(), CLI::ValidationError);
 }
 
 TEST_F(TApp, AddRemoveSetItemsNoCase) {
