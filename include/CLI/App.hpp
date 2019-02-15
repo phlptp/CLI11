@@ -652,7 +652,7 @@ class App {
                     std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(options));
+        opt->check(IsMember{options});
         return opt;
     }
 
@@ -664,7 +664,7 @@ class App {
                             std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(&options));
+        opt->check(IsMember{&options});
         return opt;
     }
 
@@ -677,7 +677,7 @@ class App {
                     bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(options));
+        opt->check(IsMember{options});
         return opt;
     }
 
@@ -690,7 +690,7 @@ class App {
                             bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(&options));
+        opt->check(IsMember{&options});
         return opt;
     }
 
@@ -701,7 +701,7 @@ class App {
                                 std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(options, CLI::ignore_case));
+        opt->check(IsMember{options, CLI::ignore_case});
         return opt;
     }
 
@@ -713,7 +713,7 @@ class App {
                                         std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(&options, CLI::ignore_case));
+        opt->check(IsMember{&options, CLI::ignore_case});
         return opt;
     }
 
@@ -725,7 +725,7 @@ class App {
                                 bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(options, CLI::ignore_case));
+        opt->check(IsMember{options, CLI::ignore_case});
         return opt;
     }
 
@@ -737,7 +737,7 @@ class App {
                                         bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(&options, CLI::ignore_case));
+        opt->check(IsMember{&options, CLI::ignore_case});
         return opt;
     }
 
@@ -748,7 +748,7 @@ class App {
                                       std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(options, CLI::ignore_underscore));
+        opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
 
@@ -760,7 +760,7 @@ class App {
                                               std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(options, CLI::ignore_underscore));
+        opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
 
@@ -772,7 +772,7 @@ class App {
                                       bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(options, CLI::ignore_underscore));
+        opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
 
@@ -785,7 +785,7 @@ class App {
                                               bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(&options, CLI::ignore_underscore));
+        opt->check(IsMember{&options, CLI::ignore_underscore});
         return opt;
     }
 
@@ -796,7 +796,7 @@ class App {
                                            std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(options, CLI::ignore_underscore, CLI::ignore_case));
+        opt->check(IsMember{options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
 
@@ -808,7 +808,7 @@ class App {
                                                    std::string description = "") {
 
         Option *opt = add_option(option_name, member, std::move(description));
-        opt->check(IsMember(&options, CLI::ignore_underscore, CLI::ignore_case));
+        opt->check(IsMember{&options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
 
@@ -820,7 +820,7 @@ class App {
                                            bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(options, CLI::ignore_underscore, CLI::ignore_case));
+        opt->check(IsMember{options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
 
@@ -833,7 +833,7 @@ class App {
                                                    bool defaulted) {
 
         Option *opt = add_option(option_name, member, std::move(description), defaulted);
-        opt->check(IsMember(&options, CLI::ignore_underscore, CLI::ignore_case));
+        opt->check(IsMember{&options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
 

@@ -262,9 +262,9 @@ struct IsMember : public Validator {
     /// Note that the constructor is templated, but the struct is not, so C++17 is not
     /// needed to provide nice syntax for IsMember(set).
     template <typename T, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    IsMember(T set,
-             std::function<typename std::decay<decltype(*set)>::type::value_type(
-                 typename std::decay<decltype(*set)>::type::value_type)> filter_fn = {}) {
+    explicit IsMember(T set,
+                      std::function<typename std::decay<decltype(*set)>::type::value_type(
+                          typename std::decay<decltype(*set)>::type::value_type)> filter_fn = {}) {
         using item_t = typename std::decay<decltype(*set)>::type::value_type;
 
         tname_function = [set]() {
@@ -305,13 +305,13 @@ struct IsMember : public Validator {
     /// Internally copies into a shared pointer and sends it
     /// through the next constructor to avoid duplicating logic.
     template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy, typename... Args>
-    IsMember(T set, Args &&... other) : IsMember(std::make_shared<T>(set), other...) {}
+    explicit IsMember(T set, Args &&... other) : IsMember(std::make_shared<T>(set), other...) {}
 
     /// Shortcut to allow inplace initilizer lists to be used as sets.
     ///
     /// Vector used internally to ensure order preservation.
     template <typename... Args>
-    IsMember(std::initializer_list<std::string> items, Args &&... other)
+    explicit IsMember(std::initializer_list<std::string> items, Args &&... other)
         : IsMember(std::vector<std::string>(items), other...) {}
 
     /// You can pass in as many filter functions as you like, they nest

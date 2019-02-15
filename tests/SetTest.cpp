@@ -11,7 +11,7 @@ static_assert(CLI::is_copyable_ptr<int>::value == false, "is_copyable_ptr should
 
 TEST_F(TApp, SimpleSets) {
     std::string value;
-    auto opt = app.add_option("-s,--set", value)->check(CLI::IsMember(std::set<std::string>({"one", "two", "three"})));
+    auto opt = app.add_option("-s,--set", value)->check(CLI::IsMember{std::set<std::string>({"one", "two", "three"})});
     args = {"-s", "one"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
@@ -23,7 +23,7 @@ TEST_F(TApp, SimpleSets) {
 TEST_F(TApp, SimpleSetsPtrs) {
     auto set = std::shared_ptr<std::set<std::string>>(new std::set<std::string>{"one", "two", "three"});
     std::string value;
-    auto opt = app.add_option("-s,--set", value)->check(CLI::IsMember(set));
+    auto opt = app.add_option("-s,--set", value)->check(CLI::IsMember{set});
     args = {"-s", "one"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
