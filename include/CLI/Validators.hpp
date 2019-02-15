@@ -269,15 +269,28 @@ class IsMember : public Validator {
   public:
     using filter_fn_t = std::function<std::string(std::string)>;
 
+    /// This checks to see if an item is in a set: shared_pointer version. (Empty function)
+    template <typename T>
+    explicit IsMember(std::shared_ptr<T> set)
+        : IsMember(set, std::function<typename T::value_type(typename T::value_type)>{}) {}
+
+    template <typename T, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
+    explicit IsMember(T set)
+        : IsMember(set,
+                   std::function<typename std::remove_pointer<T>::type::value_type(
+                       typename std::remove_pointer<T>::type::value_type)>{}) {}
+
+    template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
+    explicit IsMember(T set) : IsMember(set, std::function<typename T::value_type(typename T::value_type)>()) {}
+
     /// This checks to see if an item is in a set: shared_pointer version.
     ///
     /// Note that the constructor is templated, but the struct is not, so C++17 is not
     /// needed to provide nice syntax for IsMember(set).
-    template <typename T, enable_if_t<is_shared_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(
-        T set,
-        std::function<typename T::element_type::value_type(typename T::element_type::value_type)> filter_fn = {}) {
-        using item_t = typename T::element_type::value_type;
+    template <typename T, typename F> explicit IsMember(std::shared_ptr<T> set, F filter_function) {
+
+        using item_t = typename T::value_type;
+        std::function<item_t(item_t)> filter_fn = filter_function;
 
         tname_function = [set]() {
             std::stringstream out;
@@ -316,11 +329,10 @@ class IsMember : public Validator {
     ///
     /// Note that the constructor is templated, but the struct is not, so C++17 is not
     /// needed to provide nice syntax for IsMember(set).
-    template <typename T, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(T set,
-                      std::function<typename std::remove_pointer<T>::type::value_type(
-                          typename std::remove_pointer<T>::type::value_type)> filter_fn = {}) {
+    template <typename T, typename F, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
+    explicit IsMember(T set, F filter_function) {
         using item_t = typename std::remove_pointer<T>::type::value_type;
+        std::function<item_t(item_t)> filter_fn = filter_function;
 
         tname_function = [set]() {
             std::stringstream out;
@@ -359,9 +371,10 @@ class IsMember : public Validator {
     ///
     /// Note that the constructor is templated, but the struct is not, so C++17 is not
     /// needed to provide nice syntax for IsMember(set).
-    template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(T set, std::function<typename T::value_type(typename T::value_type)> filter_fn = {}) {
+    template <typename T, typename F, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
+    explicit IsMember(T set, F filter_function) {
         using item_t = typename T::value_type;
+        std::function<item_t(item_t)> filter_fn = filter_function;
 
         std::stringstream out;
         out << detail::type_name<item_t>() << " in {" << detail::join(set, ",") << "}";
@@ -397,8 +410,7 @@ class IsMember : public Validator {
     /// You can pass in as many filter functions as you like, they nest
     template <typename T, typename... Args>
     IsMember(T set, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
-        : IsMember(
-              set, [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); }, other...) {}
+        : IsMember(set, [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); }, other...) {}
 };
 
 /// Helper function to allow ignore_case to be passed to IsMember
