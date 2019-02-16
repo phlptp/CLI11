@@ -49,7 +49,9 @@ class FormatterBase {
     FormatterBase() = default;
     FormatterBase(const FormatterBase &) = default;
     FormatterBase(FormatterBase &&) = default;
-    virtual ~FormatterBase() noexcept {}
+
+    /// Adding a destructor in this form to work around bug in GCC 4.7
+    virtual ~FormatterBase() noexcept {} // NOLINT(modernize-use-equals-default)
 
     /// This is the key method that puts together help
     virtual std::string make_help(const App *, std::string, AppFormatMode) const = 0;
@@ -94,7 +96,7 @@ class FormatterLambda final : public FormatterBase {
     explicit FormatterLambda(funct_t funct) : lambda_(std::move(funct)) {}
 
     /// Adding a destructor (mostly to make GCC 4.7 happy)
-    ~FormatterLambda() noexcept override {}
+    ~FormatterLambda() noexcept override {} // NOLINT(modernize-use-equals-default)
 
     /// This will simply call the lambda function
     std::string make_help(const App *app, std::string name, AppFormatMode mode) const override {
