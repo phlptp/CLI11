@@ -333,6 +333,16 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
+    /// Adds a transformation/validator with a built in type name
+    Option *transform(const Transformer &tform) {
+        validators_.emplace_back(tform.func);
+        if(tform.tname_function)
+            type_name_fn(tform.tname_function);
+        else if(!tform.tname.empty())
+            type_name(tform.tname);
+        return this;
+    }
+
     /// Allow a set to be quickly created
     template <typename... Args> Option *set(Args &&... args) {
         check(IsMember(std::forward<Args>(args)...));

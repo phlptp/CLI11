@@ -370,7 +370,7 @@ class App {
     }
 
     /// Add option for non-vectors (duplicate copy needed without defaulted to avoid `iostream << value`)
-    template <typename T, enable_if_t<!is_vector<T>::value, detail::enabler> = detail::dummy>
+    template <typename T, enable_if_t<!is_vector<T>::value && !std::is_enum<T>::value, detail::enabler> = detail::dummy>
     Option *add_option(std::string option_name,
                        T &variable, ///< The variable to set
                        std::string option_description = "") {
@@ -442,9 +442,9 @@ class App {
                        T &variable, ///< The variable to set
                        std::string option_description = "",
                        bool defaulted = false) {
-
+        using enum_type = typename std::underlying_type<T>::type;
         CLI::callback_t fun = [&variable](CLI::results_t res) {
-            typename std::underlying_type<T>::type enum_base_value;
+            enum_type enum_base_value;
             bool retval = detail::lexical_cast(res[0], enum_base_value);
             if(retval)
                 variable = static_cast<T>(enum_base_value);
@@ -455,7 +455,7 @@ class App {
         opt->type_name(detail::type_name<T>());
         if(defaulted) {
             std::stringstream out;
-            out << static_cast<std::underlying_type<T>::type>(variable);
+            out << static_cast<enum_type>(variable);
             opt->default_str(out.str());
         }
         return opt;
@@ -600,9 +600,9 @@ class App {
             opt = add_option(std::move(flag_name), std::move(fun), std::move(flag_description), false);
         }
         if(opt->get_positional()) {
-            auto Eopt = IncorrectConstruction::PositionalFlag(opt->get_name(true));
+            auto pos_name = opt->get_name(true);
             remove_option(opt);
-            throw Eopt;
+            throw IncorrectConstruction::PositionalFlag(pos_name);
         }
 
         opt->type_size(0);
@@ -715,19 +715,19 @@ class App {
                     std::set<T> options, ///< The set of possibilities
                     std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{options});
         return opt;
     }
 
-    /// Add set of options (No default, set can be changed afterwords - do not destroy the set)
+    /// Add set of options (No default, set can be changed afterwards - do not destroy the set)
     template <typename T>
     Option *add_mutable_set(std::string option_name,
                             T &member,                  ///< The selected member of the set
                             const std::set<T> &options, ///< The set of possibilities
                             std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{&options});
         return opt;
     }
@@ -740,7 +740,7 @@ class App {
                     std::string option_description,
                     bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{options});
         return opt;
     }
@@ -753,7 +753,7 @@ class App {
                             std::string option_description,
                             bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{&options});
         return opt;
     }
@@ -764,7 +764,7 @@ class App {
                                 std::set<std::string> options, ///< The set of possibilities
                                 std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{options, CLI::ignore_case});
         return opt;
     }
@@ -776,7 +776,7 @@ class App {
                                         const std::set<std::string> &options, ///< The set of possibilities
                                         std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{&options, CLI::ignore_case});
         return opt;
     }
@@ -788,7 +788,7 @@ class App {
                                 std::string option_description,
                                 bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{options, CLI::ignore_case});
         return opt;
     }
@@ -800,7 +800,7 @@ class App {
                                         std::string option_description,
                                         bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{&options, CLI::ignore_case});
         return opt;
     }
@@ -811,7 +811,7 @@ class App {
                                       std::set<std::string> options, ///< The set of possibilities
                                       std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
@@ -823,7 +823,7 @@ class App {
                                               const std::set<std::string> &options, ///< The set of possibilities
                                               std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
@@ -835,7 +835,7 @@ class App {
                                       std::string option_description,
                                       bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{options, CLI::ignore_underscore});
         return opt;
     }
@@ -848,7 +848,7 @@ class App {
                                               std::string option_description,
                                               bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{&options, CLI::ignore_underscore});
         return opt;
     }
@@ -859,7 +859,7 @@ class App {
                                            std::set<std::string> options, ///< The set of possibilities
                                            std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
@@ -871,7 +871,7 @@ class App {
                                                    const std::set<std::string> &options, ///< The set of possibilities
                                                    std::string option_description = "") {
 
-        Option *opt = add_option(option_name, member, std::move(description));
+        Option *opt = add_option(option_name, member, std::move(option_description));
         opt->check(IsMember{&options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
@@ -883,7 +883,7 @@ class App {
                                            std::string option_description,
                                            bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
@@ -896,7 +896,7 @@ class App {
                                                    std::string option_description,
                                                    bool defaulted) {
 
-        Option *opt = add_option(option_name, member, std::move(description), defaulted);
+        Option *opt = add_option(option_name, member, std::move(option_description), defaulted);
         opt->check(IsMember{&options, CLI::ignore_underscore, CLI::ignore_case});
         return opt;
     }
