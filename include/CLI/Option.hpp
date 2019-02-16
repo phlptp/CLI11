@@ -330,10 +330,8 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
-
     /// Allow a set to be quickly created
-    template <typename... Args>
-    Option *set(Args&&... args) {
+    template <typename... Args> Option *set(Args &&... args) {
         check(IsMember(std::forward<Args>(args)...));
         return this;
     }
