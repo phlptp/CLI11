@@ -792,18 +792,21 @@ class Option : public OptionBase<Option> {
         if(results_.empty()) {
             retval = detail::lexical_cast(defaultval_, output);
         } else if(results_.size() == 1) {
-            retval = detail::lexical_cast(results[0], output);
+            retval = detail::lexical_cast(results_[0], output);
         } else {
             switch(multi_option_policy_) {
             case MultiOptionPolicy::TakeFirst:
-                retval = detail::lexical_cast(results.front(), output);
+                retval = detail::lexical_cast(results_.front(), output);
+                break;
             case MultiOptionPolicy::TakeLast:
             default:
-                retval = detail::lexical_cast(results.back(), output);
+                retval = detail::lexical_cast(results_.back(), output);
+                break;
             case MultiOptionPolicy::Throw:
                 throw ConversionError(get_name(), results_);
             case MultiOptionPolicy::Join:
                 retval = detail::lexical_cast(detail::join(results_), output);
+                break;
             }
         }
         if(!retval) {
@@ -814,9 +817,10 @@ class Option : public OptionBase<Option> {
     template <typename T> void results(std::vector<T> &output, char delim = '\0') {
         output.clear();
         bool retval = true;
+
         for(const auto &elem : results_) {
             if(delim != '\0') {
-                for(const auto &var : CLI::detail::split(elem, delimiter)) {
+                for(const auto &var : CLI::detail::split(elem, delim)) {
                     if(!var.empty()) {
                         output.emplace_back();
                         retval &= detail::lexical_cast(var, output.back());
@@ -827,6 +831,7 @@ class Option : public OptionBase<Option> {
                 retval &= detail::lexical_cast(elem, output.back());
             }
         }
+
         if(!retval) {
             throw ConversionError(get_name(), results_);
         }

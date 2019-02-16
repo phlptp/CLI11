@@ -453,6 +453,17 @@ TEST_F(TApp, LotsOfFlags) {
     EXPECT_EQ(1u, app.count("-A"));
 }
 
+TEST_F(TApp, NumberFlags) {
+
+    int val;
+    app.add_flag("-1{1},-2{2},-3{3},-4{4},-5{5},-6{6}, -7{7}, -8{8}, -9{9}", val);
+
+    args = {"-7"};
+    run();
+    EXPECT_EQ(1u, app.count("-1"));
+    EXPECT_EQ(val, 7);
+}
+
 TEST_F(TApp, LotsOfFlagsSingleString) {
 
     app.add_flag("-a");
