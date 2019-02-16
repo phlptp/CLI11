@@ -398,147 +398,85 @@ class Transformer : public Validator {
   public:
     using filter_fn_t = std::function<std::string(std::string)>;
 
-    /// This allows in-place construction
-    template <typename... Args>
-    explicit Transformer(std::initializer_list<std::pair<std::string, std::string>> values, Args &&... args)
-        : Transformer(std::vector<std::pair<std::string, std::string>>(values), std::forward<Args>(args)...) {}
-
-    /// This allows in-place construction
-    template <typename T,
-              typename... Args,
-              enable_if_t<!std::is_convertible<T, std::string>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(std::initializer_list<std::pair<std::string, T>> values, Args &&... args)
-        : Transformer(std::vector<std::pair<std::string, T>>(values), std::forward<Args>(args)...) {}
-
-    /// This checks to see if an item is in a set: shared_pointer version. (Empty function)
-    template <typename T>
-    explicit Transformer(std::shared_ptr<T> mapping)
-        : Transformer(mapping, std::function<typename T::value_type(typename T::value_type)>{}) {}
-
-    /// This checks to see if an item is in a set: pointer version. (Empty function)
-    template <typename T, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(T mapping)
-        : Transformer(mapping,
-                      std::function<typename std::remove_pointer<T>::type::value_type(
-                          typename std::remove_pointer<T>::type::value_type)>{}) {}
-
-    /// This checks to see if an item is in a set: copy version. (Empty function)
-    template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(T mapping)
-        : Transformer(mapping, std::function<typename T::value_type(typename T::value_type)>()) {}
-
-    /// This checks to see if an item is in a set: shared_pointer version.
-    template <typename T, typename F> explicit Transformer(std::shared_ptr<T> mapping, F filter_function) {
-
-        using item_t = typename T::value_type;
-        std::function<item_t(item_t)> filter_fn = filter_function;
-
-        tname_function = [mapping]() {
-            std::stringstream out;
-            out << detail::type_name<item_t>() << " in {" << detail::join(*mapping, ",") << "}";
-            return out.str();
-        };
-
-        func = [mapping, filter_fn](std::string &input) {
-            auto result = std::find_if(std::begin(*mapping), std::end(*mapping), [filter_fn, input](item_t v) {
-                item_t a = v;
-                item_t b;
-                if(!detail::lexical_cast(input, b))
-                    throw ConversionError(input); // name is added later
-
-                if(filter_fn) {
-                    a = filter_fn(a);
-                    b = filter_fn(b);
+    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping) {
+        func = [mapping](std::string &input) {
+            for(const auto &ip : mapping) {
+                if(ip.first == input) {
+                    input = ip.second;
                 }
-                return a == b;
-            });
-
-            if(result == std::end(*mapping)) {
-                return input + " not in {" + detail::join(*mapping, ",") + "}";
-            } else {
-                // Make sure the version in the input string is identical to the one in the set
-                // Requires std::stringstream << be supported on T.
-                std::stringstream out;
-                out << *result;
-                input = out.str();
-                return std::string();
             }
+            return std::string();
         };
     }
 
-    /// This checks to see if an item is in a set: pointer version.
-    template <typename T, typename F, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(T mapping, F filter_function) {
-        using item_t = typename std::remove_pointer<T>::type::value_type;
-        std::function<item_t(item_t)> filter_fn = filter_function;
-
-        tname_function = [mapping]() {
-            std::stringstream out;
-            out << detail::type_name<item_t>() << " in {" << detail::join(*mapping, ",") << "}";
-            return out.str();
-        };
-
-        func = [mapping, filter_fn](std::string &input) {
-            auto result = std::find_if(std::begin(*mapping), std::end(*mapping), [filter_fn, input](item_t v) {
-                item_t a = v;
-                item_t b;
-                if(!detail::lexical_cast(input, b))
-                    throw ConversionError(input); // name is added later
-
-                if(filter_fn) {
-                    a = filter_fn(a);
-                    b = filter_fn(b);
+    template <typename T, enable_if_t<!std::is_enum<T>::value, detail::enabler> = detail::dummy>
+    explicit Transformer(std::vector<std::pair<std::string, T>> mapping) {
+        func = [mapping](std::string &input) {
+            for(const auto &ip : mapping) {
+                if(ip.first == input) {
+                    std::stringstream out;
+                    out << ip.second;
+                    input = out.str();
                 }
-                return a == b;
-            });
-
-            if(result == std::end(*mapping)) {
-                return input + " not in {" + detail::join(*mapping, ",") + "}";
-            } else {
-                // Make sure the version in the input string is identical to the one in the set
-                // Requires std::stringstream << be supported on T.
-                std::stringstream out;
-                out << *result;
-                input = out.str();
-                return std::string();
             }
+            return std::string();
+        };
+    }
+    template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
+    explicit Transformer(std::vector<std::pair<std::string, T>> mapping) {
+        func = [mapping](std::string &input) {
+            for(const auto &ip : mapping) {
+                if(ip.first == input) {
+                    std::stringstream out;
+                    out << static_cast<typename std::underlying_type<T>::type>(ip.second);
+                    input = out.str();
+                }
+            }
+            return std::string();
         };
     }
 
-    /// This checks to see if an item is in a set: copy version.
-    template <typename T, typename F, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(T mapping, F filter_function) {
-        using item_t = typename T::value_type;
-        std::function<item_t(item_t)> filter_fn = filter_function;
-
-        std::stringstream out;
-        out << detail::type_name<item_t>() << " in {" << detail::join(mapping, ",") << "}";
-        tname = out.str();
-
+    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
-            auto result = std::find_if(std::begin(mapping), std::end(mapping), [filter_fn, input](item_t v) {
-                item_t a = v;
-                item_t b;
-                if(!detail::lexical_cast(input, b))
-                    throw ConversionError(input); // name is added later
-
-                if(filter_fn) {
-                    a = filter_fn(a);
-                    b = filter_fn(b);
+            for(const auto &ip : mapping) {
+                std::string a = filter_fn(ip.first);
+                std::string b = filter_fn(input);
+                if(a == b) {
+                    input = ip.second;
                 }
-                return a == b;
-            });
-
-            if(result == std::end(mapping)) {
-                return input + " not in {" + detail::join(mapping, ",") + "}";
-            } else {
-                // Make sure the version in the input string is identical to the one in the set
-                // Requires std::stringstream << be supported on T.
-                std::stringstream out;
-                out << *result;
-                input = out.str();
-                return std::string();
             }
+            return std::string();
+        };
+    }
+
+    template <typename T, enable_if_t<!std::is_enum<T>::value, detail::enabler> = detail::dummy>
+    explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
+        func = [mapping, filter_fn](std::string &input) {
+            for(const auto &ip : mapping) {
+                std::string a = filter_fn(ip.first);
+                std::string b = filter_fn(input);
+                if(a == b) {
+                    std::stringstream out;
+                    out << ip.second;
+                    input = out.str();
+                }
+            }
+            return std::string();
+        };
+    }
+    template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
+    explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
+        func = [mapping, filter_fn](std::string &input) {
+            for(const auto &ip : mapping) {
+                std::string a = filter_fn(ip.first);
+                std::string b = filter_fn(input);
+                if(a == b) {
+                    std::stringstream out;
+                    out << static_cast<typename std::underlying_type<T>::type>(ip.second);
+                    input = out.str();
+                }
+            }
+            return std::string();
         };
     }
 

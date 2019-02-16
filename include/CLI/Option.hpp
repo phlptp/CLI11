@@ -343,6 +343,20 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
+    /*
+    template <typename... Args,
+              enable_if_t<
+                  !std::is_constructible<std::function<std::string(std::string)>, Args...>::value &&
+                      !std::is_same<Transformer,
+                                    typename std::remove_reference<typename std::remove_const<
+                                        typename std::tuple_element<0, std::tuple<Args...>>::type>::type>::type>::value,
+                  detail::enabler> = detail::dummy>
+    Option *transform(Args &&... args) {
+        check(Transformer(std::forward<Args>(args)...));
+        return this;
+    }
+    */
+
     /// Allow a set to be quickly created
     template <typename... Args> Option *set(Args &&... args) {
         check(IsMember(std::forward<Args>(args)...));
