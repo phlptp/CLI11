@@ -336,6 +336,13 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
+    /// Allow a set to be quickly created
+    template <typename... Args> Option *set(std::initializer_list<std::string> tmpset, Args &&... args) {
+        std::vector<std::string> myset(tmpset);
+        check(IsMember(myset, std::forward<Args>(args)...));
+        return this;
+    }
+
     /// Adds a user supplied function to run on each item passed in (communicate though lambda capture)
     Option *each(std::function<void(std::string)> func) {
         validators_.emplace_back([func](std::string &inout) {
