@@ -43,7 +43,7 @@ TEST_F(TApp, SimpleSetsPtrs) {
 
 TEST_F(TApp, ShortcutSets) {
     std::string value;
-    auto opt = app.add_option("-s,--set", value)->set("one", "two", "three");
+    auto opt = app.add_option("-s,--set", value)->check(CLI::IsMember({"one", "two", "three"}));
     args = {"-s", "one"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
@@ -52,7 +52,7 @@ TEST_F(TApp, ShortcutSets) {
     EXPECT_EQ(value, "one");
 
     std::string value2;
-    auto opt2 = app.add_option("--set2", value2)->set(CLI::ignore_case, "One", "two", "three");
+    auto opt2 = app.add_option("--set2", value2)->check(CLI::IsMember({"One", "two", "three"}, CLI::ignore_case));
     args = {"--set2", "onE"};
     run();
     EXPECT_EQ(1u, app.count("--set2"));
