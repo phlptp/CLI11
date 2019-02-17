@@ -55,6 +55,37 @@ TEST_F(TApp, EnumTransform) {
     EXPECT_THROW(run(), CLI::ConversionError);
 }
 
+TEST_F(TApp, EnumCheckedTransform) {
+    enum class test : int16_t { val1 = 3, val2 = 4, val3 = 17 };
+    test value;
+    auto opt = app.add_option("-s", value)
+                   ->check(CLI::CheckedTransformer(std::vector<std::pair<std::string, test>>{
+                       {"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}}));
+    args = {"-s", "val1"};
+    run();
+    EXPECT_EQ(1u, app.count("-s"));
+    EXPECT_EQ(1u, opt->count());
+    EXPECT_EQ(value, test::val1);
+
+    args = {"-s", "val2"};
+    run();
+    EXPECT_EQ(value, test::val2);
+
+    args = {"-s", "val3"};
+    run();
+    EXPECT_EQ(value, test::val3);
+
+    args = {"-s", "17"};
+    run();
+    EXPECT_EQ(value, test::val3);
+
+    args = {"-s", "val4"};
+    EXPECT_THROW(run(), CLI::ValidationError);
+
+    args = {"-s", "5"};
+    EXPECT_THROW(run(), CLI::ValidationError);
+}
+
 TEST_F(TApp, SimpleTransformFn) {
     int value;
     auto opt = app.add_option("-s", value)->transform(CLI::Transformer({{"one", std::string("1")}}, CLI::ignore_case));

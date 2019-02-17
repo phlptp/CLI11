@@ -22,7 +22,7 @@ inline std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     // Check to see if empty string, give consistent result
     if(s.empty())
-        elems.emplace_back("");
+        elems.emplace_back();
     else {
         std::stringstream ss;
         ss.str(s);

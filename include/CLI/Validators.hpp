@@ -97,7 +97,7 @@ class Validator {
     }
 
     /// create a validator that fails when a given validator succeeds
-    Validator operator~() const {
+    Validator operator!() const {
         Validator newval;
         newval.tname = "NOT " + tname;
 
@@ -288,22 +288,17 @@ class IsMember : public Validator {
   public:
     using filter_fn_t = std::function<std::string(std::string)>;
 
-    /// This allows in-place construction
+    /// This allows in-place construction using an initializer list
     template <typename... Args>
     explicit IsMember(std::initializer_list<std::string> values, Args &&... args)
         : IsMember(std::vector<std::string>(values), std::forward<Args>(args)...) {}
 
-    /// This checks to see if an item is in a set: shared_pointer version. (Empty function)
-    template <typename T>
-    explicit IsMember(std::shared_ptr<T> set)
-        : IsMember(set, std::function<typename T::value_type(typename T::value_type)>{}) {}
-
     /// This checks to see if an item is in a set: pointer version. (Empty function)
-    template <typename T, enable_if_t<std::is_pointer<T>::value, detail::enabler> = detail::dummy>
+    template <typename T, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set)
         : IsMember(set,
-                   std::function<typename std::remove_pointer<T>::type::value_type(
-                       typename std::remove_pointer<T>::type::value_type)>{}) {}
+                   std::function<typename std::pointer_traits<T>::element_type::value_type(
+                       typename std::pointer_traits<T>::element_type::value_type)>{}) {}
 
     /// This checks to see if an item is in a set: copy version. (Empty function)
     template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
@@ -312,8 +307,7 @@ class IsMember : public Validator {
     /// This checks to see if an item is in a set: pointer version.
     template <typename T, typename F, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
     explicit IsMember(T set, F filter_function) {
-        using set_t = typename std::pointer_traits<T>::element_type;
-        using item_t = typename set_t::value_type;
+        using item_t = typename std::pointer_traits<T>::element_type::value_type;
 
         std::function<item_t(item_t)> filter_fn = filter_function;
 
