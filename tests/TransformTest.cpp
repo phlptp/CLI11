@@ -10,6 +10,16 @@ TEST_F(TApp, SimpleTransform) {
     EXPECT_EQ(value, 1);
 }
 
+TEST_F(TApp, SimpleTransformInitList) {
+    int value;
+    auto opt = app.add_option("-s", value)->transform(CLI::Transformer({{"one", "1"}}));
+    args = {"-s", "one"};
+    run();
+    EXPECT_EQ(1u, app.count("-s"));
+    EXPECT_EQ(1u, opt->count());
+    EXPECT_EQ(value, 1);
+}
+
 TEST_F(TApp, SimpleNumericalTransform) {
     int value;
     auto opt =

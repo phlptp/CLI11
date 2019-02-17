@@ -398,49 +398,24 @@ class Transformer : public Validator {
   public:
     using filter_fn_t = std::function<std::string(std::string)>;
 
-    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping) {
-        func = [mapping](std::string &input) {
-            for(const auto &ip : mapping) {
-                if(ip.first == input) {
-                    input = ip.second;
-                }
-            }
-            return std::string();
-        };
-    }
+    /// This allows in-place construction
+    template <typename... Args>
+    explicit Transformer(std::initializer_list<std::pair<std::string, std::string>> values, Args &&... args)
+        : Transformer(std::vector<std::pair<std::string, std::string>>(values), std::forward<Args>(args)...) {}
 
-    template <typename T, enable_if_t<!std::is_enum<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(std::vector<std::pair<std::string, T>> mapping) {
-        func = [mapping](std::string &input) {
-            for(const auto &ip : mapping) {
-                if(ip.first == input) {
-                    std::stringstream out;
-                    out << ip.second;
-                    input = out.str();
-                }
-            }
-            return std::string();
-        };
-    }
-    template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(std::vector<std::pair<std::string, T>> mapping) {
-        func = [mapping](std::string &input) {
-            for(const auto &ip : mapping) {
-                if(ip.first == input) {
-                    std::stringstream out;
-                    out << static_cast<typename std::underlying_type<T>::type>(ip.second);
-                    input = out.str();
-                }
-            }
-            return std::string();
-        };
-    }
+    /// direct map of std::string to std::string
+    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping)
+        : Transformer(std::move(mapping), filter_fn_t()) {}
+    /// direct map of std::string to the string representation of some other object
+    template <typename T>
+    explicit Transformer(std::vector<std::pair<std::string, T>> mapping)
+        : Transformer(std::move(mapping), filter_fn_t()) {}
 
     explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = filter_fn(ip.first);
-                std::string b = filter_fn(input);
+                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                std::string b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     input = ip.second;
                 }
@@ -449,30 +424,14 @@ class Transformer : public Validator {
         };
     }
 
-    template <typename T, enable_if_t<!std::is_enum<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
+    template <typename T> explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = filter_fn(ip.first);
-                std::string b = filter_fn(input);
+                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                std::string b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     std::stringstream out;
                     out << ip.second;
-                    input = out.str();
-                }
-            }
-            return std::string();
-        };
-    }
-    template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
-    explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
-        func = [mapping, filter_fn](std::string &input) {
-            for(const auto &ip : mapping) {
-                std::string a = filter_fn(ip.first);
-                std::string b = filter_fn(input);
-                if(a == b) {
-                    std::stringstream out;
-                    out << static_cast<typename std::underlying_type<T>::type>(ip.second);
                     input = out.str();
                 }
             }
@@ -483,15 +442,92 @@ class Transformer : public Validator {
     /// You can pass in as many filter functions as you like, they nest
     template <typename T, typename... Args>
     Transformer(T mapping, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
-        : Transformer(
-              mapping, [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); }, other...) {}
+        : Transformer(std::move(mapping),
+                      [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); },
+                      other...) {}
 };
 
-/// Helper function to allow ignore_case to be passed to IsMember
+/// translate named items to other or a value set
+class CheckedTransformer : public Validator {
+  public:
+    using filter_fn_t = std::function<std::string(std::string)>;
+
+    /// This allows in-place construction
+    template <typename... Args>
+    explicit CheckedTransformer(std::initializer_list<std::pair<std::string, std::string>> values, Args &&... args)
+        : CheckedTransformer(std::vector<std::pair<std::string, std::string>>(values), std::forward<Args>(args)...) {}
+
+    /// direct map of std::string to std::string
+    explicit CheckedTransformer(std::vector<std::pair<std::string, std::string>> mapping)
+        : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
+
+    /// direct map of std::string to the string representation of some other object
+    template <typename T>
+    explicit CheckedTransformer(std::vector<std::pair<std::string, T>> mapping)
+        : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
+
+    explicit CheckedTransformer(std::vector<std::pair<std::string, std::string>> mapping, filter_fn_t filter_fn) {
+        func = [mapping, filter_fn](std::string &input) {
+            for(const auto &ip : mapping) {
+                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                std::string b = (filter_fn) ? filter_fn(input) : input;
+                if(a == b) {
+                    input = ip.second;
+                    return std::string();
+                }
+            }
+            return input + " not in checked set";
+        };
+    }
+
+    template <typename T>
+    explicit CheckedTransformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
+        std::vector<std::string> outputs;
+        outputs.reserve(mapping.size());
+        for(auto &ip : mapping) {
+            std::stringstream out;
+            out << ip.second;
+            outputs.emplace_back(out.str());
+        }
+        func = [mapping, filter_fn, outputs](std::string &input) {
+            for(const auto &ip : mapping) {
+                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                std::string b = (filter_fn) ? filter_fn(input) : input;
+                if(a == b) {
+                    std::stringstream out;
+                    out << ip.second;
+                    input = out.str();
+                    return std::string();
+                }
+            }
+            for(const auto &ip : outputs) {
+                if(ip == input) {
+                    return std::string();
+                }
+            }
+            return input + "not in checked set";
+        };
+    }
+
+    /// You can pass in as many filter functions as you like, they nest
+    template <typename T, typename... Args>
+    CheckedTransformer(T mapping, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
+        : CheckedTransformer(std::move(mapping),
+                             [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); },
+                             other...) {}
+}; // namespace CLI
+
+/// Helper function to allow ignore_case to be passed to IsMember or Transform
 inline std::string ignore_case(std::string item) { return detail::to_lower(item); }
 
-/// Helper function to allow ignore_underscore to be passed to IsMember
+/// Helper function to allow ignore_underscore to be passed to IsMember or Transform
 inline std::string ignore_underscore(std::string item) { return detail::remove_underscore(item); }
+
+/// Helper function to allow checks to ignore spaces to be passed to IsMember or Transform
+inline std::string ignore_space(std::string item) {
+    item.erase(std::remove(std::begin(item), std::end(item), ' '), std::end(item));
+    return item;
+}
 
 namespace detail {
 /// Split a string into a program name and command line arguments

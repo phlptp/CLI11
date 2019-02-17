@@ -335,7 +335,7 @@ class Option : public OptionBase<Option> {
 
     /// Adds a transformation/validator with a built in type name
     Option *transform(const Transformer &tform) {
-        validators_.emplace_back(tform.func);
+        validators_.insert(validators_.begin(), tform.func);
         if(tform.tname_function)
             type_name_fn(tform.tname_function);
         else if(!tform.tname.empty())

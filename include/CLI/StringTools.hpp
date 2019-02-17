@@ -11,6 +11,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include "TypeTools.hpp"
 
 namespace CLI {
 namespace detail {
@@ -41,6 +42,21 @@ template <typename T> std::string join(const T &v, std::string delim = ",") {
         if(start++ > 0)
             s << delim;
         s << i;
+    }
+    return s.str();
+}
+
+/// Simple function to join a string from processed elements
+template <typename T,
+          typename Callable,
+          enable_if_t<!std::is_constructible<std::string, Callable>::value, detail::enabler> = detail::dummy>
+std::string join(const T &v, Callable func, std::string delim = ",") {
+    std::ostringstream s;
+    size_t start = 0;
+    for(const auto &i : v) {
+        if(start++ > 0)
+            s << delim;
+        s << func(i);
     }
     return s.str();
 }

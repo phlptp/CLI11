@@ -90,10 +90,11 @@ constexpr const char *type_name() {
 
 // Lexical cast
 
-/// Signed integers / enums
-template <typename T,
-          enable_if_t<std::is_integral<T>::value && std::is_signed<T>::value && !is_bool<T>::value, detail::enabler> =
-              detail::dummy>
+/// Signed integers
+template <
+    typename T,
+    enable_if_t<std::is_integral<T>::value && std::is_signed<T>::value && !is_bool<T>::value && !std::is_enum<T>::value,
+                detail::enabler> = detail::dummy>
 bool lexical_cast(std::string input, T &output) {
     try {
         size_t n = 0;
@@ -163,10 +164,22 @@ bool lexical_cast(std::string input, T &output) {
     return true;
 }
 
+/// enumerations
+template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
+bool lexical_cast(std::string input, T &output) {
+    typename std::underlying_type<T>::type val;
+    bool retval = detail::lexical_cast(input, val);
+    if(!retval) {
+        return false;
+    }
+    output = static_cast<T>(val);
+    return true;
+}
+
 /// Non-string parsable
 template <typename T,
           enable_if_t<!std::is_floating_point<T>::value && !std::is_integral<T>::value &&
-                          !std::is_assignable<T &, std::string>::value,
+                          !std::is_assignable<T &, std::string>::value && !std::is_enum<T>::value,
                       detail::enabler> = detail::dummy>
 bool lexical_cast(std::string input, T &output) {
     std::istringstream is;
@@ -205,4 +218,12 @@ void sum_flag_vector(const std::vector<std::string> &flags, T &output) {
 }
 
 } // namespace detail
+
+/// output streaming for enumerations
+template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
+std::ostream &operator<<(std::ostream &in, const T &level) {
+    // make sure this is out of the detail namespace otherwise it won't be found when needed
+    return in << static_cast<typename std::underlying_type<T>::type>(level);
+}
+
 } // namespace CLI

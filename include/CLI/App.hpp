@@ -370,7 +370,7 @@ class App {
     }
 
     /// Add option for non-vectors (duplicate copy needed without defaulted to avoid `iostream << value`)
-    template <typename T, enable_if_t<!is_vector<T>::value && !std::is_enum<T>::value, detail::enabler> = detail::dummy>
+    template <typename T, enable_if_t<!is_vector<T>::value, detail::enabler> = detail::dummy>
     Option *add_option(std::string option_name,
                        T &variable, ///< The variable to set
                        std::string option_description = "") {
@@ -431,31 +431,6 @@ class App {
         if(defaulted) {
             std::stringstream out;
             out << variable;
-            opt->default_str(out.str());
-        }
-        return opt;
-    }
-
-    /// Add option for enumerations
-    template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
-    Option *add_option(std::string option_name,
-                       T &variable, ///< The variable to set
-                       std::string option_description = "",
-                       bool defaulted = false) {
-        using enum_type = typename std::underlying_type<T>::type;
-        CLI::callback_t fun = [&variable](CLI::results_t res) {
-            enum_type enum_base_value;
-            bool retval = detail::lexical_cast(res[0], enum_base_value);
-            if(retval)
-                variable = static_cast<T>(enum_base_value);
-            return retval;
-        };
-
-        Option *opt = add_option(option_name, fun, option_description, defaulted);
-        opt->type_name(detail::type_name<T>());
-        if(defaulted) {
-            std::stringstream out;
-            out << static_cast<enum_type>(variable);
             opt->default_str(out.str());
         }
         return opt;
