@@ -633,8 +633,8 @@ class Option : public OptionBase<Option> {
 
                     try {
                         err_msg = vali(result);
-                    } catch(const ConversionError &err) {
-                        throw ConversionError(err.what(), get_name());
+                    } catch(const ValidationError &err) {
+                        throw ValidationError(err.what(), get_name());
                     }
 
                     if(!err_msg.empty())
