@@ -8,6 +8,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include "StringTools.hpp"
 
 namespace CLI {
 
@@ -80,15 +81,73 @@ template <typename T, enable_if_t<is_vector<T>::value, detail::enabler> = detail
 constexpr const char *type_name() {
     return "VECTOR";
 }
+/// print name for enumeration types
+template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
+constexpr const char *type_name() {
+    return "ENUM";
+}
 
+/// print for all other types
 template <typename T,
-          enable_if_t<!std::is_floating_point<T>::value && !std::is_integral<T>::value && !is_vector<T>::value,
+          enable_if_t<!std::is_floating_point<T>::value && !std::is_integral<T>::value && !is_vector<T>::value &&
+                          !std::is_enum<T>::value,
                       detail::enabler> = detail::dummy>
 constexpr const char *type_name() {
     return "TEXT";
 }
 
 // Lexical cast
+
+/// convert a flag into an integer value  typically binary flags
+inline int64_t to_flag_value(std::string val) {
+    static const std::string trueString("true");
+    static const std::string falseString("false");
+    if(val == trueString) {
+        return 1;
+    }
+    if(val == falseString) {
+        return -1;
+    }
+    val = detail::to_lower(val);
+    int64_t ret;
+    if(val.size() == 1) {
+        switch(val[0]) {
+        case '0':
+        case 'f':
+        case 'n':
+        case '-':
+            ret = -1;
+            break;
+        case '1':
+        case 't':
+        case 'y':
+        case '+':
+            ret = 1;
+            break;
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            ret = val[0] - '0';
+            break;
+        default:
+            throw std::invalid_argument("unrecognized character");
+        }
+        return ret;
+    }
+    if(val == trueString || val == "on" || val == "yes" || val == "enable") {
+        ret = 1;
+    } else if(val == falseString || val == "off" || val == "no" || val == "disable") {
+        ret = -1;
+    } else {
+        ret = std::stoll(val);
+    }
+    return ret;
+}
 
 /// Signed integers
 template <
@@ -218,12 +277,5 @@ void sum_flag_vector(const std::vector<std::string> &flags, T &output) {
 }
 
 } // namespace detail
-
-/// output streaming for enumerations
-template <typename T, enable_if_t<std::is_enum<T>::value, detail::enabler> = detail::dummy>
-std::ostream &operator<<(std::ostream &in, const T &level) {
-    // make sure this is out of the detail namespace otherwise it won't be found when needed
-    return in << static_cast<typename std::underlying_type<T>::type>(level);
-}
 
 } // namespace CLI

@@ -407,6 +407,7 @@ class IsMember : public Validator {
     IsMember(T set, filter_fn_t filter_fn_1, filter_fn_t filter_fn_2, Args &&... other)
         : IsMember(set, [filter_fn_1, filter_fn_2](std::string a) { return filter_fn_2(filter_fn_1(a)); }, other...) {}
 };
+template <typename T> using TransformPairs = std::vector<std::pair<std::string, T>>;
 
 /// translate named items to other or a value set
 class Transformer : public Validator {
@@ -416,17 +417,15 @@ class Transformer : public Validator {
     /// This allows in-place construction
     template <typename... Args>
     explicit Transformer(std::initializer_list<std::pair<std::string, std::string>> values, Args &&... args)
-        : Transformer(std::vector<std::pair<std::string, std::string>>(values), std::forward<Args>(args)...) {}
+        : Transformer(TransformPairs<std::string>(values), std::forward<Args>(args)...) {}
 
     /// direct map of std::string to std::string
-    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping)
-        : Transformer(std::move(mapping), filter_fn_t()) {}
+    explicit Transformer(TransformPairs<std::string> mapping) : Transformer(std::move(mapping), filter_fn_t()) {}
     /// direct map of std::string to the string representation of some other object
     template <typename T>
-    explicit Transformer(std::vector<std::pair<std::string, T>> mapping)
-        : Transformer(std::move(mapping), filter_fn_t()) {}
+    explicit Transformer(TransformPairs<T> mapping) : Transformer(std::move(mapping), filter_fn_t()) {}
 
-    explicit Transformer(std::vector<std::pair<std::string, std::string>> mapping, filter_fn_t filter_fn) {
+    explicit Transformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
                 std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
@@ -439,7 +438,7 @@ class Transformer : public Validator {
         };
     }
 
-    template <typename T> explicit Transformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
+    template <typename T> explicit Transformer(TransformPairs<T> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
                 std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
@@ -470,18 +469,17 @@ class CheckedTransformer : public Validator {
     /// This allows in-place construction
     template <typename... Args>
     explicit CheckedTransformer(std::initializer_list<std::pair<std::string, std::string>> values, Args &&... args)
-        : CheckedTransformer(std::vector<std::pair<std::string, std::string>>(values), std::forward<Args>(args)...) {}
+        : CheckedTransformer(TransformPairs<std::string>(values), std::forward<Args>(args)...) {}
 
     /// direct map of std::string to std::string
-    explicit CheckedTransformer(std::vector<std::pair<std::string, std::string>> mapping)
+    explicit CheckedTransformer(TransformPairs<std::string> mapping)
         : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
 
     /// direct map of std::string to the string representation of some other object
     template <typename T>
-    explicit CheckedTransformer(std::vector<std::pair<std::string, T>> mapping)
-        : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
+    explicit CheckedTransformer(TransformPairs<T> mapping) : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
 
-    explicit CheckedTransformer(std::vector<std::pair<std::string, std::string>> mapping, filter_fn_t filter_fn) {
+    explicit CheckedTransformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
                 std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
@@ -495,16 +493,15 @@ class CheckedTransformer : public Validator {
         };
     }
 
-    template <typename T>
-    explicit CheckedTransformer(std::vector<std::pair<std::string, T>> mapping, filter_fn_t filter_fn) {
-        std::vector<std::string> outputs;
-        outputs.reserve(mapping.size());
+    template <typename T> explicit CheckedTransformer(TransformPairs<T> mapping, filter_fn_t filter_fn) {
+        std::vector<std::string> possible_outputs;
+        possible_outputs.reserve(mapping.size());
         for(auto &ip : mapping) {
             std::stringstream out;
             out << ip.second;
-            outputs.emplace_back(out.str());
+            possible_outputs.emplace_back(out.str());
         }
-        func = [mapping, filter_fn, outputs](std::string &input) {
+        func = [mapping, filter_fn, possible_outputs](std::string &input) {
             for(const auto &ip : mapping) {
                 std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
                 std::string b = (filter_fn) ? filter_fn(input) : input;
@@ -515,7 +512,7 @@ class CheckedTransformer : public Validator {
                     return std::string();
                 }
             }
-            for(const auto &ip : outputs) {
+            for(const auto &ip : possible_outputs) {
                 if(ip == input) {
                     return std::string();
                 }

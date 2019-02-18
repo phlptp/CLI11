@@ -320,9 +320,9 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
-    /// Adds a validator-like function that can change result
-    Option *transform(std::function<std::string(std::string)> func) {
-        validators_.emplace_back([func](std::string &inout) {
+    /// Adds a validator-like function that can change result runs before any Validators specified through check
+    Option *transform(std::function<std::string(const std::string &)> func) {
+        validators_.insert(validators_.begin(), [func](std::string &inout) {
             try {
                 inout = func(inout);
             } catch(const ValidationError &e) {
@@ -343,30 +343,13 @@ class Option : public OptionBase<Option> {
         return this;
     }
 
-    /*
-    template <typename... Args,
-              enable_if_t<
-                  !std::is_constructible<std::function<std::string(std::string)>, Args...>::value &&
-                      !std::is_same<Transformer,
-                                    typename std::remove_reference<typename std::remove_const<
-                                        typename std::tuple_element<0, std::tuple<Args...>>::type>::type>::type>::value,
-                  detail::enabler> = detail::dummy>
-    Option *transform(Args &&... args) {
-        check(Transformer(std::forward<Args>(args)...));
-        return this;
-    }
-    */
-
-    /// Allow a set to be quickly created
-    template <typename... Args> Option *set(Args &&... args) {
-        check(IsMember(std::forward<Args>(args)...));
-        return this;
-    }
-
-    /// Allow a set to be quickly created
-    template <typename... Args> Option *set(std::initializer_list<std::string> tmpset, Args &&... args) {
-        std::vector<std::string> myset(tmpset);
-        check(IsMember(myset, std::forward<Args>(args)...));
+    /// Adds a transformation/validator with a built in check and type name
+    Option *transform(const CheckedTransformer &tform) {
+        validators_.insert(validators_.begin(), tform.func);
+        if(tform.tname_function)
+            type_name_fn(tform.tname_function);
+        else if(!tform.tname.empty())
+            type_name(tform.tname);
         return this;
     }
 

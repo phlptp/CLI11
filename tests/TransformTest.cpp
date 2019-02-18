@@ -22,8 +22,7 @@ TEST_F(TApp, SimpleTransformInitList) {
 
 TEST_F(TApp, SimpleNumericalTransform) {
     int value;
-    auto opt =
-        app.add_option("-s", value)->transform(CLI::Transformer(std::vector<std::pair<std::string, int>>{{"one", 1}}));
+    auto opt = app.add_option("-s", value)->transform(CLI::Transformer(CLI::TransformPairs<int>{{"one", 1}}));
     args = {"-s", "one"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
@@ -35,8 +34,8 @@ TEST_F(TApp, EnumTransform) {
     enum class test : int16_t { val1 = 3, val2 = 4, val3 = 17 };
     test value;
     auto opt = app.add_option("-s", value)
-                   ->transform(CLI::Transformer(std::vector<std::pair<std::string, test>>{
-                       {"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}}));
+                   ->transform(CLI::Transformer(
+                       CLI::TransformPairs<test>{{"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}}));
     args = {"-s", "val1"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
@@ -59,8 +58,8 @@ TEST_F(TApp, EnumCheckedTransform) {
     enum class test : int16_t { val1 = 3, val2 = 4, val3 = 17 };
     test value;
     auto opt = app.add_option("-s", value)
-                   ->check(CLI::CheckedTransformer(std::vector<std::pair<std::string, test>>{
-                       {"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}}));
+                   ->transform(CLI::CheckedTransformer(
+                       CLI::TransformPairs<test>{{"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}}));
     args = {"-s", "val1"};
     run();
     EXPECT_EQ(1u, app.count("-s"));
@@ -112,11 +111,10 @@ TEST_F(TApp, EnumTransformFn) {
     enum class test : int16_t { val1 = 3, val2 = 4, val3 = 17 };
     test value;
     auto opt = app.add_option("-s", value)
-                   ->transform(CLI::Transformer(std::vector<std::pair<std::string, test>>{{"val1", test::val1},
-                                                                                          {"val2", test::val2},
-                                                                                          {"val3", test::val3}},
-                                                CLI::ignore_case,
-                                                CLI::ignore_underscore));
+                   ->transform(CLI::Transformer(
+                       CLI::TransformPairs<test>{{"val1", test::val1}, {"val2", test::val2}, {"val3", test::val3}},
+                       CLI::ignore_case,
+                       CLI::ignore_underscore));
     args = {"-s", "val_1"};
     run();
     EXPECT_EQ(1u, app.count("-s"));

@@ -1700,14 +1700,15 @@ TEST_F(TApp, OptionWithDefaults) {
 TEST_F(TApp, OrderedModifingTransforms) {
     std::vector<std::string> val;
     auto m = app.add_option("-m", val);
-    m->transform([](std::string x) { return x + "1"; });
-    m->transform([](std::string x) { return x + "2"; });
+    // transforms are executed in reverse order or entry
+    m->transform([](const std::string &x) { return x + "1"; });
+    m->transform([](const std::string &x) { return x + "2"; });
 
     args = {"-mone", "-mtwo"};
 
     run();
 
-    EXPECT_EQ(val, std::vector<std::string>({"one12", "two12"}));
+    EXPECT_EQ(val, std::vector<std::string>({"one21", "two21"}));
 }
 
 TEST_F(TApp, ThrowingTransform) {

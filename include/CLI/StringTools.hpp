@@ -11,9 +11,16 @@
 #include <string>
 #include <type_traits>
 #include <vector>
-#include "TypeTools.hpp"
 
 namespace CLI {
+
+/// output streaming for enumerations
+template <typename T, typename = typename std::enable_if<std::is_enum<T>::value>::type>
+std::ostream &operator<<(std::ostream &in, const T &level) {
+    // make sure this is out of the detail namespace otherwise it won't be found when needed
+    return in << static_cast<typename std::underlying_type<T>::type>(level);
+}
+
 namespace detail {
 
 // Based on http://stackoverflow.com/questions/236129/split-a-string-in-c
@@ -49,7 +56,7 @@ template <typename T> std::string join(const T &v, std::string delim = ",") {
 /// Simple function to join a string from processed elements
 template <typename T,
           typename Callable,
-          enable_if_t<!std::is_constructible<std::string, Callable>::value, detail::enabler> = detail::dummy>
+          typename = typename std::enable_if<!std::is_constructible<std::string, Callable>::value>::type>
 std::string join(const T &v, Callable func, std::string delim = ",") {
     std::ostringstream s;
     size_t start = 0;
@@ -235,56 +242,6 @@ template <typename Callable> inline std::string find_and_modify(std::string str,
     return str;
 }
 
-/// convert a flag into an integer value  typically binary flags
-inline int64_t to_flag_value(std::string val) {
-    static const std::string trueString("true");
-    static const std::string falseString("false");
-    if(val == trueString) {
-        return 1;
-    }
-    if(val == falseString) {
-        return -1;
-    }
-    val = detail::to_lower(val);
-    int64_t ret;
-    if(val.size() == 1) {
-        switch(val[0]) {
-        case '0':
-        case 'f':
-        case 'n':
-        case '-':
-            ret = -1;
-            break;
-        case '1':
-        case 't':
-        case 'y':
-        case '+':
-            ret = 1;
-            break;
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            ret = val[0] - '0';
-            break;
-        default:
-            throw std::invalid_argument("unrecognized character");
-        }
-        return ret;
-    }
-    if(val == trueString || val == "on" || val == "yes" || val == "enable") {
-        ret = 1;
-    } else if(val == falseString || val == "off" || val == "no" || val == "disable") {
-        ret = -1;
-    } else {
-        ret = std::stoll(val);
-    }
-    return ret;
-}
 /// Split a string '"one two" "three"' into 'one two', 'three'
 /// Quote characters can be ` ' or "
 inline std::vector<std::string> split_up(std::string str) {
