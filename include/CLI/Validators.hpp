@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 
 // C standard library
@@ -283,51 +284,57 @@ class Range : public Validator {
     template <typename T> explicit Range(T max) : Range(static_cast<T>(0), max) {}
 };
 
+namespace detail {
+template <typename T, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
+auto smart_deref(T value) -> decltype(*value) {
+    return *value;
+}
+
+template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy> T smart_deref(T value) {
+    return value;
+}
+} // namespace detail
+
 /// Verify items are in a set
 class IsMember : public Validator {
   public:
     using filter_fn_t = std::function<std::string(std::string)>;
 
     /// This allows in-place construction using an initializer list
-    template <typename... Args>
-    explicit IsMember(std::initializer_list<std::string> values, Args &&... args)
-        : IsMember(std::vector<std::string>(values), std::forward<Args>(args)...) {}
+    template <typename T, typename... Args>
+    explicit IsMember(std::initializer_list<T> values, Args &&... args)
+        : IsMember(std::vector<T>(values), std::forward<Args>(args)...) {}
 
-    /// This checks to see if an item is in a set: pointer version. (Empty function)
-    template <typename T, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
+    /// This checks to see if an item is in a set (empty function)
+    template <typename T>
     explicit IsMember(T set)
         : IsMember(std::move(set),
-                   std::function<typename std::pointer_traits<T>::element_type::value_type(
-                       typename std::pointer_traits<T>::element_type::value_type)>{}) {}
+                   std::function<typename IsMemberType<typename element_value_type<T>::type>::type(
+                       typename IsMemberType<typename element_value_type<T>::type>::type)>()) {}
 
-    /// This checks to see if an item is in a set: copy version. (Empty function)
-    template <typename T, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(T set)
-        : IsMember(std::move(set), std::function<typename T::value_type(typename T::value_type)>()) {}
-
-    /// This checks to see if an item is in a set: pointer version. You can pass in a function that will filter
+    /// This checks to see if an item is in a set: pointer or copy version. You can pass in a function that will filter
     /// both sides of the comparison before computing the comparison.
-    template <typename T, typename F, enable_if_t<is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(T set, F filter_function) {
+    template <typename T, typename F> explicit IsMember(T set, F filter_function) {
         // Get the type of the contained item - requires a container have ::value_type
-        using item_t = typename std::pointer_traits<T>::element_type::value_type;
+        using item_t = typename element_value_type<T>::type;
+        using local_item_t = typename IsMemberType<item_t>::type;
 
         // Make a local copy of the filter function, using a std::function if not one already
-        std::function<item_t(item_t)> filter_fn = filter_function;
+        std::function<local_item_t(local_item_t)> filter_fn = filter_function;
 
         // This is the type name for help, it will take the current version of the set contents
         tname_function = [set]() {
             std::stringstream out;
-            out << detail::type_name<item_t>() << " in {" << detail::join(*set, ",") << "}";
+            out << detail::type_name<item_t>() << " in {" << detail::join(detail::smart_deref(set), ",") << "}";
             return out.str();
         };
 
         // This is the function that validates
         // It stores a copy of the set pointer-like, so shared_ptr will stay alive
         func = [set, filter_fn](std::string &input) {
-            for(const item_t &v : *set) {
-                item_t a = v;
-                item_t b;
+            for(const item_t &v : detail::smart_deref(set)) {
+                local_item_t a = v;
+                local_item_t b;
                 if(!detail::lexical_cast(input, b))
                     throw ValidationError(input); // name is added later
 
@@ -352,54 +359,7 @@ class IsMember : public Validator {
             }
 
             // If you reach this point, the result was not found
-            return input + " not in {" + detail::join(*set, ",") + "}";
-        };
-    }
-
-    /// This checks to see if an item is in a set: copy version.
-    template <typename T, typename F, enable_if_t<!is_copyable_ptr<T>::value, detail::enabler> = detail::dummy>
-    explicit IsMember(T set, F filter_function) {
-        // Get the type of the contained item - requires a container have ::value_type
-        using item_t = typename T::value_type;
-
-        // Make a local copy of the filter function, using a std::function if not one already
-        std::function<item_t(item_t)> filter_fn = filter_function;
-
-        // This is the type name for help, since the set contents can't change, we just capture this
-        std::stringstream out;
-        out << detail::type_name<item_t>() << " in {" << detail::join(set, ",") << "}";
-        tname = out.str();
-
-        // This is the function that validates
-        func = [set, filter_fn](std::string &input) {
-            for(const item_t &v : set) {
-                item_t a = v;
-                item_t b;
-                if(!detail::lexical_cast(input, b))
-                    throw ValidationError(input); // name is added later
-
-                // The filter function might be empty, so don't filter if it is.
-                if(filter_fn) {
-                    a = filter_fn(a);
-                    b = filter_fn(b);
-                }
-
-                if(a == b) {
-                    // Make sure the version in the input string is identical to the one in the set
-                    // Requires std::stringstream << be supported on T.
-                    if(filter_fn) {
-                        std::stringstream out;
-                        out << v;
-                        input = out.str();
-                    }
-
-                    // Return empty error string (success)
-                    return std::string();
-                }
-            }
-
-            // If you reach this point, the result was not found
-            return input + " not in {" + detail::join(set, ",") + "}";
+            return input + " not in {" + detail::join(detail::smart_deref(set), ",") + "}";
         };
     }
 
@@ -431,8 +391,9 @@ class Transformer : public Validator {
     explicit Transformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
-                std::string b = (filter_fn) ? filter_fn(input) : input;
+                // use a local const reference to keep alive the result of filter_fn
+                const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                const std::string &b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     input = ip.second;
                 }
@@ -444,8 +405,9 @@ class Transformer : public Validator {
     template <typename T> explicit Transformer(TransformPairs<T> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
-                std::string b = (filter_fn) ? filter_fn(input) : input;
+                // use a local const reference to keep alive the result of filter_fn
+                const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                const std::string &b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     std::stringstream out;
                     out << ip.second;
@@ -485,10 +447,13 @@ class CheckedTransformer : public Validator {
     explicit CheckedTransformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
-                std::string b = (filter_fn) ? filter_fn(input) : input;
+                // use a local const reference to keep alive the result of filter_fn
+                const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                const std::string &b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     input = ip.second;
+                    return std::string();
+                } else if(input == ip.second) {
                     return std::string();
                 }
             }
@@ -506,8 +471,9 @@ class CheckedTransformer : public Validator {
         }
         func = [mapping, filter_fn, possible_outputs](std::string &input) {
             for(const auto &ip : mapping) {
-                std::string a = (filter_fn) ? filter_fn(ip.first) : ip.first;
-                std::string b = (filter_fn) ? filter_fn(input) : input;
+                // use a local const reference to keep alive the result of filter_fn
+                const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
+                const std::string &b = (filter_fn) ? filter_fn(input) : input;
                 if(a == b) {
                     std::stringstream out;
                     out << ip.second;

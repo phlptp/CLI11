@@ -273,12 +273,12 @@ Before parsing, you can set the following options:
 These options return the `Option` pointer, so you can chain them together, and even skip storing the pointer entirely. Check takes any function that has the signature `void(const std::string&)`; it should throw a `ValidationError` when validation fails. The help message will have the name of the parent option prepended. Since `check` and `transform` use the same underlying mechanism, you can chain as many as you want, and they will be executed in order. If you just want to see the unconverted values, use `.results()` to get the `std::vector<std::string>` of results. Validate can also be a subclass of `CLI::Validator`, in which case it can also set the type name and can be combined with `&` and `|` (all built-in validators are this sort).
 
 The IsMember validator lets you specify a set of predefined options. You can pass any container or copiable pointer (including `std::shared_ptr`) to a container to this validator; the container just needs to be iterable and have a `::value_type`. The type should be convertable from a string (`const char*` is not, for example). You can use an initializer list of strings directly if you like. If you need to modify the set later, the pointer form lets you do that; the type message and check will correctly refer to the current version of the set.
-After specifying a set of options, you can also specify "filter" functions of the form `T(T)`, where `T` is the type of the values. The most common choices probably will be `CLI::ignore_case` an `CLI::ignore_underscores`.
+After specifying a set of options, you can also specify "filter" functions of the form `T(T)`, where `T` is the type of the values. The most common choices probably will be `CLI::ignore_case` an `CLI::ignore_underscore`.
 Here are some examples
 of IsMember:
 
 -   `CLI::IsMember({"choice1", "choice2"})`: Select from exact match to choices
--   `CLI::IsMember({"choice1", "choice2"}, CLI::ignore_case, CLI::ignore_underscores)`: Match things like `Choice_1`, too.
+-   `CLI::IsMember({"choice1", "choice2"}, CLI::ignore_case, CLI::ignore_underscore)`: Match things like `Choice_1`, too.
 -   `CLI::IsMember(std::set<int>({2,3,4}))`: Most containers and types work
 -   `auto p = std::make_shared<std::vector<std::string>>("one", "two"); CLI::IsMember(p)`: You can modify `p` later.
 
