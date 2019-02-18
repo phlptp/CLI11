@@ -253,8 +253,7 @@ class Option : public OptionBase<Option> {
            std::function<bool(results_t)> callback,
            bool defaulted,
            App *parent)
-        : description_(std::move(description)), default_(defaulted), parent_(parent),
-          callback_(callback ? std::move(callback) : [](results_t) { return true; }) {
+        : description_(std::move(description)), default_(defaulted), parent_(parent), callback_(std::move(callback)) {
         std::tie(snames_, lnames_, pname_) = detail::get_names(detail::split_names(option_name));
     }
 
@@ -642,7 +641,9 @@ class Option : public OptionBase<Option> {
                         throw ValidationError(get_name(), err_msg);
                 }
         }
-
+        if(!(callback_)) {
+            return;
+        }
         bool local_result;
 
         // Num items expected or length of vector, always at least 1
@@ -793,7 +794,7 @@ class Option : public OptionBase<Option> {
     /// get the results as a particular type
     template <typename T,
               enable_if_t<!is_vector<T>::value && !std::is_const<T>::value, detail::enabler> = detail::dummy>
-    void results(T &output) {
+    void results(T &output) const {
         bool retval;
         if(results_.empty()) {
             retval = detail::lexical_cast(defaultval_, output);
@@ -820,7 +821,7 @@ class Option : public OptionBase<Option> {
         }
     }
     /// get the results as a vector of a particular type
-    template <typename T> void results(std::vector<T> &output, char delim = '\0') {
+    template <typename T> void results(std::vector<T> &output, char delim = '\0') const {
         output.clear();
         bool retval = true;
 
@@ -841,6 +842,21 @@ class Option : public OptionBase<Option> {
         if(!retval) {
             throw ConversionError(get_name(), results_);
         }
+    }
+
+    /// return the results as a particular type
+    template <typename T, enable_if_t<!is_vector<T>::value, detail::enabler> = detail::dummy> T as() const {
+        T output;
+        results(output);
+        return output;
+    }
+
+    /// get the results as a vector of a particular type
+    template <typename T, enable_if_t<is_vector<T>::value, detail::enabler> = detail::dummy>
+    T as(char delim = '\0') const {
+        std::vector<T> output;
+        results(output, delim);
+        return output;
     }
 
     /// See if the callback has been run already

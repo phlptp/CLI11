@@ -403,8 +403,7 @@ class App {
     }
     /// add option with no description or variable assignment
     Option *add_option(std::string option_name) {
-        CLI::callback_t fun = [](CLI::results_t) { return true; };
-        return add_option(option_name, fun, std::string{}, false);
+        return add_option(option_name, CLI::callback_t(), std::string{}, false);
     }
 
     /// add option with description but with no variable assignment or callback
@@ -412,8 +411,7 @@ class App {
               enable_if_t<std::is_const<T>::value && std::is_constructible<std::string, T>::value, detail::enabler> =
                   detail::dummy>
     Option *add_option(std::string option_name, T &option_description) {
-        CLI::callback_t fun = [](CLI::results_t) { return true; };
-        return add_option(option_name, fun, option_description, false);
+        return add_option(option_name, CLI::callback_t(), option_description, false);
     }
 
     /// Add option for non-vectors with a default print
@@ -505,15 +503,25 @@ class App {
     template <typename T, enable_if_t<is_vector<T>::value, detail::enabler> = detail::dummy>
     Option *add_option_function(std::string option_name,
                                 const std::function<bool(const T &)> &func, ///< the callback to execute
-                                std::string option_description = "") {
+                                std::string option_description = "",
+                                char delimiter = '\0') {
 
-        CLI::callback_t fun = [func](CLI::results_t res) {
+        CLI::callback_t fun = [func, delimiter](CLI::results_t res) {
             T values;
             bool retval = true;
             values.reserve(res.size());
-            for(const auto &a : res) {
-                values.emplace_back();
-                retval &= detail::lexical_cast(a, values.back());
+            for(const auto &elem : res) {
+                if((delimiter != '\0') && (elem.find_first_of(delimiter) != std::string::npos)) {
+                    for(const auto &var : CLI::detail::split(elem, delimiter)) {
+                        if(!var.empty()) {
+                            values.emplace_back();
+                            retval &= detail::lexical_cast(var, values.back());
+                        }
+                    }
+                } else {
+                    values.emplace_back();
+                    retval &= detail::lexical_cast(elem, values.back());
+                }
             }
             if(retval) {
                 return func(values);
@@ -521,7 +529,7 @@ class App {
             return retval;
         };
 
-        Option *opt = add_option(option_name, std::move(fun), option_description, false);
+        Option *opt = add_option(option_name, std::move(fun), std::move(option_description), false);
         opt->type_name(detail::type_name<T>())->type_size(-1);
         return opt;
     }
@@ -587,9 +595,9 @@ class App {
   public:
     /// add flag with no description or variable assignment
     Option *add_flag(std::string flag_name) {
-        CLI::callback_t fun = [](CLI::results_t) { return true; };
-        std::string str;
-        return add_flag_internal(flag_name, fun, str);
+        CLI::callback_t cback;
+        std::string no_description;
+        return add_flag_internal(flag_name, cback, no_description);
     }
 
     /// add flag with description but with no variable assignment or callback
@@ -597,12 +605,12 @@ class App {
               enable_if_t<std::is_const<T>::value && std::is_constructible<std::string, T>::value, detail::enabler> =
                   detail::dummy>
     Option *add_flag(std::string flag_name, T &flag_description) {
-        CLI::callback_t fun = [](CLI::results_t) { return true; };
         std::string str{flag_description};
-        return add_flag_internal(flag_name, fun, str);
+        CLI::callback_t cback;
+        return add_flag_internal(flag_name, cback, str);
     }
 
-    /// Add option for flag integer
+    /// Add option for flag with integer result
     template <typename T,
               enable_if_t<std::is_integral<T>::value && !is_bool<T>::value, detail::enabler> = detail::dummy>
     Option *add_flag(std::string flag_name,
@@ -1335,6 +1343,10 @@ class App {
         throw OptionNotFound(option_name);
     }
 
+    /// shortcut bracket operator for getting results
+    const Option *operator[](std::string option_name) const { return get_option(option_name); }
+    /// shortcut bracket operator for getting results overload for const char *
+    const Option *operator[](const char *option_name) const { return get_option(option_name); }
     /// Get an option by name (non-const version)
     Option *get_option(std::string option_name) {
         for(Option_p &opt : options_) {

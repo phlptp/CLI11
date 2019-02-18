@@ -10,6 +10,26 @@ TEST_F(TApp, OneFlagShort) {
     EXPECT_EQ(1u, app.count("--count"));
 }
 
+TEST_F(TApp, OneFlagShortValues) {
+    app.add_flag("-c{v1},--count{v2}");
+    args = {"-c"};
+    run();
+    EXPECT_EQ(1u, app.count("-c"));
+    EXPECT_EQ(1u, app.count("--count"));
+    auto v = app["-c"]->results();
+    EXPECT_EQ(v[0], "v1");
+}
+
+TEST_F(TApp, OneFlagShortValuesAs) {
+    app.add_flag("-c{1},--count{2}");
+    args = {"-c"};
+    run();
+    EXPECT_EQ(app["-c"]->as<int>(), 1);
+    args = {"--count"};
+    run();
+    EXPECT_EQ(app["-c"]->as<int>(), 2);
+}
+
 TEST_F(TApp, OneFlagShortWindows) {
     app.add_flag("-c,--count");
     args = {"/c"};
