@@ -576,14 +576,14 @@ class Option : public OptionBase<Option> {
                 for(const std::string &sname : snames_) {
                     name_list.push_back("-" + sname);
                     if(check_fname(sname)) {
-                        name_list.back() += "{false}";
+                        name_list.back() += "{" + get_flag_value(sname, "") + "}";
                     }
                 }
 
                 for(const std::string &lname : lnames_) {
                     name_list.push_back("--" + lname);
                     if(check_fname(lname)) {
-                        name_list.back() += "{false}";
+                        name_list.back() += "{" + get_flag_value(lname, "") + "}";
                     }
                 }
             } else {
@@ -739,7 +739,7 @@ class Option : public OptionBase<Option> {
         return (detail::find_member(name, fnames_, ignore_case_, ignore_underscore_) >= 0);
     }
 
-    std::string get_flag_value(std::string name, std::string input_value) {
+    std::string get_flag_value(std::string name, std::string input_value) const {
         static const std::string trueString{"true"};
         static const std::string falseString{"false"};
         static const std::string emptyString{"{}"};

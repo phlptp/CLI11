@@ -389,6 +389,19 @@ class Transformer : public Validator {
     explicit Transformer(TransformPairs<T> mapping) : Transformer(std::move(mapping), filter_fn_t()) {}
 
     explicit Transformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
+        // This is the type name for help, it will take the current version of the set contents
+        tname_function = [mapping]() {
+            std::stringstream out;
+            out << "{"
+                << detail::join(mapping,
+                                [](const std::pair<std::string, std::string> &string_pair) {
+                                    return std::string("\"") + string_pair.first + "\"->" + string_pair.second;
+                                },
+                                ",")
+                << "}";
+            return out.str();
+        };
+
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
                 // use a local const reference to keep alive the result of filter_fn
@@ -403,6 +416,21 @@ class Transformer : public Validator {
     }
 
     template <typename T> explicit Transformer(TransformPairs<T> mapping, filter_fn_t filter_fn) {
+        // This is the type name for help, it will take the current version of the set contents
+        tname_function = [mapping]() {
+            std::stringstream out;
+            out << "{"
+                << detail::join(mapping,
+                                [](const std::pair<std::string, T> &string_pair) {
+                                    std::stringstream out_mapping;
+                                    out_mapping << '\"' << string_pair.first << "\"->" << string_pair.second;
+                                    return out_mapping.str();
+                                },
+                                ",")
+                << "}";
+            return out.str();
+        };
+
         func = [mapping, filter_fn](std::string &input) {
             for(const auto &ip : mapping) {
                 // use a local const reference to keep alive the result of filter_fn
@@ -445,7 +473,24 @@ class CheckedTransformer : public Validator {
     explicit CheckedTransformer(TransformPairs<T> mapping) : CheckedTransformer(std::move(mapping), filter_fn_t()) {}
 
     explicit CheckedTransformer(TransformPairs<std::string> mapping, filter_fn_t filter_fn) {
-        func = [mapping, filter_fn](std::string &input) {
+        // This is the type name for help, it will take the current version of the set contents
+        std::stringstream out;
+        out << "{"
+            << detail::join(mapping,
+                            [](const std::pair<std::string, std::string> &string_pair) {
+                                return std::string("\"") + string_pair.first + "\"->" + string_pair.second;
+                            },
+                            ",")
+            << ","
+            << detail::join(mapping,
+                            [](const std::pair<std::string, std::string> &string_pair) { return string_pair.second; },
+                            ",")
+            << "}";
+
+        std::string value_string = out.str();
+        tname = "value in " + value_string;
+
+        func = [=](std::string &input) {
             for(const auto &ip : mapping) {
                 // use a local const reference to keep alive the result of filter_fn
                 const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
@@ -457,7 +502,7 @@ class CheckedTransformer : public Validator {
                     return std::string();
                 }
             }
-            return input + " not in checked set";
+            return input + " not in " + value_string;
         };
     }
 
@@ -469,7 +514,22 @@ class CheckedTransformer : public Validator {
             out << ip.second;
             possible_outputs.emplace_back(out.str());
         }
-        func = [mapping, filter_fn, possible_outputs](std::string &input) {
+
+        std::stringstream out;
+        out << "{"
+            << detail::join(mapping,
+                            [](const std::pair<std::string, T> &string_pair) {
+                                std::stringstream out_mapping;
+                                out_mapping << '\"' << string_pair.first << "\"->" << string_pair.second;
+                                return out_mapping.str();
+                            },
+                            ",")
+            << "," << detail::join(possible_outputs, ",") << "}";
+        std::string value_string = out.str();
+
+        tname = std::string("value in ") + value_string;
+
+        func = [=](std::string &input) {
             for(const auto &ip : mapping) {
                 // use a local const reference to keep alive the result of filter_fn
                 const std::string &a = (filter_fn) ? filter_fn(ip.first) : ip.first;
@@ -486,7 +546,7 @@ class CheckedTransformer : public Validator {
                     return std::string();
                 }
             }
-            return input + "not in checked set";
+            return input + " not in " + value_string;
         };
     }
 
