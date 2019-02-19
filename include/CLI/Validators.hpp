@@ -106,7 +106,7 @@ class Validator {
         // Give references (will make a copy in lambda function)
         const std::function<std::string(std::string & res)> &f1 = func;
 
-        newval.func = [f1, failString](std::string &test) {
+        newval.func = [f1, failString](std::string &test) -> std::string {
             std::string s1 = f1(test);
             if(s1.empty())
                 return failString;
