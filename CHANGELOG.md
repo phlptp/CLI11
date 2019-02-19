@@ -4,9 +4,20 @@ Set handling has been completely replaced by a new backend that works as a Valid
 
 * New `CL::IsMember` validator replaces set validation [#222]
 * Much more powerful flags with different values [#211]
+* `add_option` now supports bool due to unified bool handling [#211]
 * Support for composable unnamed subcommands [#216]
 * Custom vector separator [#209], [#221]
 * Validators added for IP4 addresses and positive numbers [#210]
+* Minimum required Boost for optional Optionals has been corrected to 1.61
+
+> ### Converting from CLI11 1.7:
+>
+> * `app.add_set("--name", value, {"choice1", "choice2"})` should become `app.add_option("--name", value)->check(CLI::IsMember({"choice1", "choice2"}))`
+> * The `_mutable` versions of this can be replaced by passing a pointer or shared pointer into `IsMember`
+> * The `_ignore_case` version of this can be replaced by adding `CLI::ignore_case` to the argument list in `IsMember`
+> * The `_ignore_underscore` version of this can be replaced by adding `CLI::ignore_underscore` to the argument list in `IsMember`
+> * The `_ignore_case_underscore` version of this can be replaced by adding both functions listed above to the argument list in `IsMember`
+> * An error with sets now produces a `ValidationError` instead of a `ConversionError`
 
 > ### Converting from CLI11 1.7:
 >

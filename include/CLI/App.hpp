@@ -691,7 +691,7 @@ class App {
     }
 #endif
 
-    /// Add set of options (No default, temp reference, such as an inline set)
+    /// Add set of options (No default, temp reference, such as an inline set) DEPRECATED
     template <typename T>
     Option *add_set(std::string option_name,
                     T &member,           ///< The selected member of the set
@@ -715,7 +715,7 @@ class App {
         return opt;
     }
 
-    /// Add set of options (with default, static set, such as an inline set)
+    /// Add set of options (with default, static set, such as an inline set) DEPRECATED
     template <typename T>
     Option *add_set(std::string option_name,
                     T &member,           ///< The selected member of the set
@@ -728,7 +728,7 @@ class App {
         return opt;
     }
 
-    /// Add set of options (with default, set can be changed afterwards - do not destroy the set)
+    /// Add set of options (with default, set can be changed afterwards - do not destroy the set) DEPRECATED
     template <typename T>
     Option *add_mutable_set(std::string option_name,
                             T &member,                  ///< The selected member of the set
@@ -741,7 +741,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore case (no default, static set)
+    /// Add set of options, string only, ignore case (no default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_case)) instead")
     Option *add_set_ignore_case(std::string option_name,
                                 std::string &member,           ///< The selected member of the set
                                 std::set<std::string> options, ///< The set of possibilities
@@ -753,7 +754,8 @@ class App {
     }
 
     /// Add set of options, string only, ignore case (no default, set can be changed afterwards - do not destroy the
-    /// set)
+    /// set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_case)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_case(std::string option_name,
                                         std::string &member,                  ///< The selected member of the set
                                         const std::set<std::string> &options, ///< The set of possibilities
@@ -764,7 +766,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore case (default, static set)
+    /// Add set of options, string only, ignore case (default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_case)) instead")
     Option *add_set_ignore_case(std::string option_name,
                                 std::string &member,           ///< The selected member of the set
                                 std::set<std::string> options, ///< The set of possibilities
@@ -777,6 +780,8 @@ class App {
     }
 
     /// Add set of options, string only, ignore case (default, set can be changed afterwards - do not destroy the set)
+    /// DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(...)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_case(std::string option_name,
                                         std::string &member,                  ///< The selected member of the set
                                         const std::set<std::string> &options, ///< The set of possibilities
@@ -788,7 +793,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore underscore (no default, static set)
+    /// Add set of options, string only, ignore underscore (no default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_underscore)) instead")
     Option *add_set_ignore_underscore(std::string option_name,
                                       std::string &member,           ///< The selected member of the set
                                       std::set<std::string> options, ///< The set of possibilities
@@ -800,7 +806,8 @@ class App {
     }
 
     /// Add set of options, string only, ignore underscore (no default, set can be changed afterwards - do not destroy
-    /// the set)
+    /// the set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_underscore)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_underscore(std::string option_name,
                                               std::string &member,                  ///< The selected member of the set
                                               const std::set<std::string> &options, ///< The set of possibilities
@@ -811,7 +818,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore underscore (default, static set)
+    /// Add set of options, string only, ignore underscore (default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_underscore)) instead")
     Option *add_set_ignore_underscore(std::string option_name,
                                       std::string &member,           ///< The selected member of the set
                                       std::set<std::string> options, ///< The set of possibilities
@@ -824,7 +832,8 @@ class App {
     }
 
     /// Add set of options, string only, ignore underscore (default, set can be changed afterwards - do not destroy the
-    /// set)
+    /// set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_underscore)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_underscore(std::string option_name,
                                               std::string &member,                  ///< The selected member of the set
                                               const std::set<std::string> &options, ///< The set of possibilities
@@ -836,7 +845,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore underscore and case (no default, static set)
+    /// Add set of options, string only, ignore underscore and case (no default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_case, CLI::ignore_underscore)) instead")
     Option *add_set_ignore_case_underscore(std::string option_name,
                                            std::string &member,           ///< The selected member of the set
                                            std::set<std::string> options, ///< The set of possibilities
@@ -848,7 +858,9 @@ class App {
     }
 
     /// Add set of options, string only, ignore underscore and case (no default, set can be changed afterwards - do not
-    /// destroy the set)
+    /// destroy the set) DEPRECATED
+    CLI11_DEPRECATED(
+        "Use ->check(CLI::IsMember(..., CLI::ignore_case, CLI::ignore_underscore)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_case_underscore(std::string option_name,
                                                    std::string &member, ///< The selected member of the set
                                                    const std::set<std::string> &options, ///< The set of possibilities
@@ -859,7 +871,8 @@ class App {
         return opt;
     }
 
-    /// Add set of options, string only, ignore underscore and case (default, static set)
+    /// Add set of options, string only, ignore underscore and case (default, static set) DEPRECATED
+    CLI11_DEPRECATED("Use ->check(CLI::IsMember(..., CLI::ignore_case, CLI::ignore_underscore)) instead")
     Option *add_set_ignore_case_underscore(std::string option_name,
                                            std::string &member,           ///< The selected member of the set
                                            std::set<std::string> options, ///< The set of possibilities
@@ -872,7 +885,9 @@ class App {
     }
 
     /// Add set of options, string only, ignore underscore and case (default, set can be changed afterwards - do not
-    /// destroy the set)
+    /// destroy the set) DEPRECATED
+    CLI11_DEPRECATED(
+        "Use ->check(CLI::IsMember(..., CLI::ignore_case, CLI::ignore_underscore)) with a (shared) pointer instead")
     Option *add_mutable_set_ignore_case_underscore(std::string option_name,
                                                    std::string &member, ///< The selected member of the set
                                                    const std::set<std::string> &options, ///< The set of possibilities
