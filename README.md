@@ -582,6 +582,10 @@ There are several options that are supported on the main app and subcommands and
 -   `.footer(std::string())`: 🆕 Set a callback to generate a string that will appear at the end of the help string.
 -   `.set_help_flag(name, message)`: Set the help flag name and message, returns a pointer to the created option.
 -   `.set_help_all_flag(name, message)`: Set the help all flag name and message, returns a pointer to the created option. Expands subcommands.
+-   `.set_version_flag(name, version_string)`: Set the version flag name and version_string, returns a pointer to the created option.
+-   `.set_version_flag(name, std::string())`: Set the version flag name and a callback that gets called when the version is generated(). The function signature is std::string(void).
+-   `.version(version_string)`: Set the version_string, sets up the version flag automatically using "-v,--version"
+-   `.version(std::string())`: Set the version callback that gets called when the version is generated(). The function signature is std::string(void).  Sets up the version flag automatically using "-v,--version".
 -   `.failure_message(func)`: Set the failure message function. Two provided: `CLI::FailureMessage::help` and `CLI::FailureMessage::simple` (the default).
 -   `.group(name)`: Set a group name, defaults to `"Subcommands"`. Setting `""` will be hide the subcommand.
 -   `[option_name]`: retrieve a const pointer to an option given by `option_name` for Example `app["--flag1"]` will get a pointer to the option for the "--flag1" value,  `app["--flag1"]->as<bool>()` will get the results of the command line for a flag. The operation will throw an exception if the option name is not valid.
