@@ -84,6 +84,8 @@ class ConfigBase : public Config {
     char arraySeparator = ',';
     /// the character used separate the name from the value
     char valueDelimiter = '=';
+    /// the maximum number of layers to allow
+    uint8_t maxLayers_{255};
 
   public:
     std::string
@@ -109,6 +111,11 @@ class ConfigBase : public Config {
     /// Specify the delimiter between a name and value
     ConfigBase *valueSeparator(char vSep) {
         valueDelimiter = vSep;
+        return this;
+    }
+    /// Specify the maximum number of parents
+    ConfigBase *maxLayers(uint8_t layers) {
+        maxLayers_ = layers;
         return this;
     }
 };

@@ -233,7 +233,10 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
         }
 
         std::vector<std::string> parents = detail::generate_parents(section, name);
-
+        if (parents.size() > maxLayers_)
+        {
+            continue;
+        }
         if(!output.empty() && name == output.back().name && parents == output.back().parents) {
             output.back().inputs.insert(output.back().inputs.end(), items_buffer.begin(), items_buffer.end());
         } else {
