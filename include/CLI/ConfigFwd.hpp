@@ -86,6 +86,10 @@ class ConfigBase : public Config {
     char valueDelimiter = '=';
     /// the maximum number of layers to allow
     uint8_t maxLayers_{255};
+    /// Specify the configuration index to use for arrayed sections
+    uint16_t configIndex{0};
+    /// Specify the configuration section that should be used
+    std::string configSection;
 
   public:
     std::string
@@ -118,6 +122,19 @@ class ConfigBase : public Config {
         maxLayers_ = layers;
         return this;
     }
+    /// get a reference to the configuration section
+    std::string &sectionRef() { return configSection; }
+    /// get the section
+    const std::string& section() const { return configSection; }
+    /// specify a particular section of the configuration file to use
+    void section(const std::string &sectionName) { configSection = sectionName; }
+
+    /// get a reference to the configuration index
+    uint16_t& indexRef() { return configIndex; }
+    /// get the section index
+    const uint16_t index() const { return configIndex; }
+    /// specify a particular index in the section to use
+    void index(uint16_t sectionIndex) { configIndex = sectionIndex; }
 };
 
 /// the default Config is the TOML file format
