@@ -961,6 +961,32 @@ TEST_F(TApp, IniSubcommandConfigurablePreParse) {
     EXPECT_EQ(subcom2->count(), 0U);
 }
 
+
+TEST_F(TApp, IniSection) {
+
+    TempFile tmpini{ "TestIniTmp.ini" };
+
+    app.set_config("--config", tmpini);
+    app.get_config_formatter_base()->section("config");
+
+    {
+        std::ofstream out{ tmpini };
+        out << "[default]" << std::endl;
+        out << "val=1" << std::endl;
+        out << "[config]" << std::endl;
+        out << "val=2" << std::endl;
+        out << "subsubcom.val=3" << std::endl;
+    }
+
+    int val{ 0 };
+    app.add_option("--val", val);
+
+    run();
+
+    EXPECT_EQ(2, val);
+    
+}
+
 TEST_F(TApp, IniSubcommandConfigurableParseComplete) {
 
     TempFile tmpini{"TestIniTmp.ini"};

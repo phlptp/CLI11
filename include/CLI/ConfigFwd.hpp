@@ -132,7 +132,7 @@ class ConfigBase : public Config {
     /// get a reference to the configuration index
     uint16_t& indexRef() { return configIndex; }
     /// get the section index
-    const uint16_t index() const { return configIndex; }
+    uint16_t index() const { return configIndex; }
     /// specify a particular index in the section to use
     void index(uint16_t sectionIndex) { configIndex = sectionIndex; }
 };

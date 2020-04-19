@@ -1376,10 +1376,8 @@ class App {
         run_callback();
     }
 
-    void parse_from_stream(std::istream &input)
-    {
-        if (parsed_ == 0)
-        {
+    void parse_from_stream(std::istream &input) {
+        if(parsed_ == 0) {
             _validate();
             _configure();
             // set the parent as nullptr as this object should be the top now
@@ -2136,7 +2134,7 @@ class App {
 
         for(App_p &sub : subcommands_) {
             // process the priority option_groups first
-            if(sub->get_name().empty() && (sub->parse_complete_callback_||sub->immediate_callback_)) {
+            if(sub->get_name().empty() && (sub->parse_complete_callback_ || sub->immediate_callback_)) {
                 if(sub->count_all() > 0) {
                     sub->_process_callbacks();
                     sub->run_callback();
@@ -2145,7 +2143,7 @@ class App {
         }
 
         for(const Option_p &opt : options_) {
-            if(opt->count() > 0 && !opt->get_callback_run()) {
+            if((opt->count() > 0 || opt->get_force_callback()) && !opt->get_callback_run()) {
                 opt->run_callback();
             }
         }
@@ -2403,8 +2401,7 @@ class App {
     }
 
     /// Internal function to parse a stream
-    void _parse_stream(std::istream &input)
-    {
+    void _parse_stream(std::istream &input) {
         auto values = config_formatter_->from_config(input);
         _parse_config(values);
         increment_parsed();
@@ -2475,10 +2472,8 @@ class App {
             return false;
         }
 
-        if (!op->get_configurable())
-        {
-            if (get_allow_config_extras() == config_extras_mode::ignore_all)
-            {
+        if(!op->get_configurable()) {
+            if(get_allow_config_extras() == config_extras_mode::ignore_all) {
                 return false;
             }
             throw ConfigError::NotConfigurable(item.fullname());

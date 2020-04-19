@@ -247,6 +247,12 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
         if(parents.size() > maxLayers_) {
             continue;
         }
+        if(!configSection.empty()) {
+            if(parents.empty() || parents.front() != configSection) {
+                continue;
+            }
+            parents.erase(parents.begin());
+        }
         if(!output.empty() && name == output.back().name && parents == output.back().parents) {
             output.back().inputs.insert(output.back().inputs.end(), items_buffer.begin(), items_buffer.end());
         } else {
