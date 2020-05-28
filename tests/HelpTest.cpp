@@ -1193,31 +1193,11 @@ TEST(TVersion, callback_flag) {
     EXPECT_THAT(vers, HasSubstr("VERSION"));
 }
 
-TEST(TVersion, simple_direct) {
-
-    CLI::App app;
-
-    app.version(std::string("VERSION " CLI11_VERSION));
-
-    auto vers = app.version();
-    EXPECT_THAT(vers, HasSubstr("VERSION"));
-}
-
-TEST(TVersion, callback_direct) {
-
-    CLI::App app;
-
-    app.version([]() { return std::string("VERSION " CLI11_VERSION); });
-
-    auto vers = app.version();
-    EXPECT_THAT(vers, HasSubstr("VERSION"));
-}
-
 TEST(TVersion, parse_throw) {
 
     CLI::App app;
 
-    app.version(CLI11_VERSION);
+    app.set_version_flag("--version", CLI11_VERSION);
 
     EXPECT_THROW(app.parse("--version"), CLI::CallForVersion);
     EXPECT_THROW(app.parse("--version --arg2 5"), CLI::CallForVersion);

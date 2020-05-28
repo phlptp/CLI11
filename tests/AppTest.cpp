@@ -2215,3 +2215,34 @@ TEST_F(TApp, CustomUserSepParse5) {
     run();
     EXPECT_EQ(bar, std::vector<std::string>({"this", "is", "a", "test"}));
 }
+
+
+// #218
+TEST_F(TApp, logFormSingleDash) {
+    bool verbose{false};
+    bool veryverbose{false};
+    bool veryveryverbose{false};
+    app.name("testargs");
+    app.allow_extras();
+    args = {"-v", "-vv", "-vvv"};
+    app.final_callback([&]() {
+        auto rem = app.remaining();
+        for(auto &arg : rem) {
+            if(arg == "-v") {
+                verbose = true;
+            }
+            if(arg == "-vv") {
+                veryverbose = true;
+            }
+            if(arg == "-vvv") {
+                veryveryverbose = true;
+            }
+        }
+    });
+    run();
+    EXPECT_EQ(app.remaining().size(), 3U);
+    EXPECT_TRUE(verbose);
+    EXPECT_TRUE(veryverbose);
+    EXPECT_TRUE(veryveryverbose);
+   
+}
