@@ -2216,7 +2216,6 @@ TEST_F(TApp, CustomUserSepParse5) {
     EXPECT_EQ(bar, std::vector<std::string>({"this", "is", "a", "test"}));
 }
 
-
 // #218
 TEST_F(TApp, logFormSingleDash) {
     bool verbose{false};
