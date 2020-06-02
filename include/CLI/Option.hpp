@@ -356,8 +356,8 @@ class Option : public OptionBase<Option> {
     /// True if the option was not passed
     bool empty() const { return results_.empty(); }
 
-    /// This class is true if option is passed.
-    explicit operator bool() const { return !empty(); }
+    /// This bool operator returns true if any arguments were passed or the option callback is forced
+    explicit operator bool() const { return !empty() || force_callback_; }
 
     /// Clear the parsed results (mostly for testing)
     void clear() {
