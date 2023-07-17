@@ -85,7 +85,7 @@ jobs:
           name: gitbook
           path: _site/book
 
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-pages-artifact@v2
 
       - uses: actions/deploy-pages@v2
         id: deployment
