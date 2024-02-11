@@ -120,8 +120,8 @@ inline std::string trim_copy(const std::string &str) {
 /// remove quotes at the front and back of a string either '"' or '\''
 CLI11_INLINE std::string &remove_quotes(std::string &str);
 
-/// remove quotes from all elements of a string vector and process escaped components
-CLI11_INLINE void remove_quotes(std::vector<std::string> &args);
+/// remove quotes from all elements of a string vector and process escaped components if allow_escape_sequences is not set to false
+CLI11_INLINE void remove_quotes(std::vector<std::string> &args,bool allow_escape_sequences=true);
 
 /// Add a leader to the beginning of all new lines (nothing is added
 /// at the start of the first line). `"; "` would be for ini files
@@ -254,7 +254,7 @@ CLI11_INLINE bool is_binary_escaped_string(const std::string &escaped_string);
 CLI11_INLINE std::string extract_binary_string(const std::string &escaped_string);
 
 /// process a quoted string, remove the quotes and if appropriate handle escaped characters
-CLI11_INLINE bool process_quoted_string(std::string &str, char string_char = '\"', char literal_char = '\'');
+CLI11_INLINE bool process_quoted_string(std::string &str, char string_char = '\"', char literal_char = '\'', bool allow_escape_sequences=true);
 
 }  // namespace detail
 

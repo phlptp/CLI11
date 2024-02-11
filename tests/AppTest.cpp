@@ -421,6 +421,17 @@ TEST_CASE_METHOD(TApp, "OneStringEqualVersionSingleStringQuotedEscapedCharacters
     CHECK("\"quoted\\n string\"" == str3);           // double quoted literal
 }
 
+TEST_CASE_METHOD(TApp, "OneStringEqualVersionSingleStringQuotedDisableEscapedCharacters", "[app]") {
+    std::string str, str2, str3;
+    app.add_option("-s,--string", str);
+    app.add_option("-t,--tstr", str2);
+    app.add_option("-m,--mstr", str3);
+    app.parse(R"raw(--string="this is my \n\"quoted\" string" -t 'qst\ring 2' -m=`"quoted\n string"`")raw",CLI::App::disable_escape_sequences);
+    CHECK("this is my \\n\\\"quoted\\\" string" == str);  // escaped
+    CHECK("qst\\ring 2" == str2);                    // literal
+    CHECK("\"quoted\\n string\"" == str3);           // double quoted literal
+}
+
 TEST_CASE_METHOD(TApp, "OneStringEqualVersionSingleStringQuotedMultipleWithEqual", "[app]") {
     std::string str, str2, str3, str4;
     app.add_option("-s,--string", str);
@@ -1814,7 +1825,7 @@ TEST_CASE_METHOD(TApp, "filesystemWideName", "[app]") {
     bool ok = static_cast<bool>(std::ofstream(myfile).put('a'));  // create file
     CHECK(ok);
 
-    // deactivate the check, so it should run now
+    // the files is created now
 
     CHECK_NOTHROW(app.parse(L"--file voil\u20ac.txt"));
 

@@ -124,6 +124,7 @@ set(CLI11_DEPENDENT_APPLICATIONS ensure_utf8 ensure_utf8_twice)
 foreach(APP IN LISTS CLI11_DEPENDENT_APPLICATIONS)
   add_executable(${APP} applications/${APP}.cpp)
   target_include_directories(${APP} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+  set_target_properties(${APP} PROPERTIES FOLDER "Tests")
 endforeach()
 
 function(add_dependent_application_definitions TARGET)

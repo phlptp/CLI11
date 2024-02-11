@@ -515,19 +515,22 @@ CLI11_INLINE std::string extract_binary_string(const std::string &escaped_string
     return outstring;
 }
 
-CLI11_INLINE void remove_quotes(std::vector<std::string> &args) {
+CLI11_INLINE void remove_quotes(std::vector<std::string> &args,bool allow_escape_sequences) {
     for(auto &arg : args) {
         if(arg.front() == '\"' && arg.back() == '\"') {
             remove_quotes(arg);
             // only remove escaped for string arguments not literal strings
-            arg = remove_escaped_characters(arg);
+            if (allow_escape_sequences)
+            {
+                arg = remove_escaped_characters(arg);
+            }
         } else {
             remove_quotes(arg);
         }
     }
 }
 
-CLI11_INLINE bool process_quoted_string(std::string &str, char string_char, char literal_char) {
+CLI11_INLINE bool process_quoted_string(std::string &str, char string_char, char literal_char,bool allow_escape_sequences) {
     if(str.size() <= 1) {
         return false;
     }
@@ -537,7 +540,7 @@ CLI11_INLINE bool process_quoted_string(std::string &str, char string_char, char
     }
     if(str.front() == string_char && str.back() == string_char) {
         detail::remove_outer(str, string_char);
-        if(str.find_first_of('\\') != std::string::npos) {
+        if(allow_escape_sequences && str.find_first_of('\\') != std::string::npos) {
             str = detail::remove_escaped_characters(str);
         }
         return true;

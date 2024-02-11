@@ -83,7 +83,7 @@ TEST_CASE_METHOD(TApp, "ExistingExeCheckWithLotsOfSpace", "[stringparse]") {
 TEST_CASE_METHOD(TApp, "ProgNameWithSpace", "[stringparse]") {
 
     app.add_flag("--foo");
-    CHECK_NOTHROW(app.parse("\"Foo Bar\" --foo", true));
+    CHECK_NOTHROW(app.parse("\"Foo Bar\" --foo", CLI::App::program_name));
 
     CHECK(app["--foo"]->as<bool>());
     CHECK(app.get_name() == "Foo Bar");
@@ -93,7 +93,7 @@ TEST_CASE_METHOD(TApp, "ProgNameWithSpace", "[stringparse]") {
 TEST_CASE_METHOD(TApp, "ProgNameOnly", "[stringparse]") {
 
     app.add_flag("--foo");
-    CHECK_NOTHROW(app.parse("\"C:\\example.exe\"", true));
+    CHECK_NOTHROW(app.parse("\"C:\\example.exe\"", CLI::App::program_name));
 
     CHECK(app.get_name() == "C:\\example.exe");
 }
@@ -110,7 +110,7 @@ TEST_CASE_METHOD(TApp, "ProgNameWithSpaceEmbeddedQuote", "[stringparse]") {
 TEST_CASE_METHOD(TApp, "ProgNameWithSpaceSingleQuote", "[stringparse]") {
 
     app.add_flag("--foo");
-    CHECK_NOTHROW(app.parse(R"('Foo\' Bar' --foo)", true));
+    CHECK_NOTHROW(app.parse(R"('Foo\' Bar' --foo)", CLI::App::program_name));
 
     CHECK(app["--foo"]->as<bool>());
     CHECK(app.get_name() == "Foo' Bar");

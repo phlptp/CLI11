@@ -555,9 +555,9 @@ template <class CharT> CLI11_INLINE void App::parse_char_t(int argc, const CharT
     parse(std::move(args));
 }
 
-CLI11_INLINE void App::parse(std::string commandline, bool program_name_included) {
+CLI11_INLINE void App::parse(std::string commandline, std::uint32_t parse_flags) {
 
-    if(program_name_included) {
+    if((parse_flags&program_name) != 0U) {
         auto nstr = detail::split_program_name(commandline);
         if((name_.empty()) || (has_automatic_name_)) {
             has_automatic_name_ = true;
@@ -578,7 +578,8 @@ CLI11_INLINE void App::parse(std::string commandline, bool program_name_included
     // remove all empty strings
     args.erase(std::remove(args.begin(), args.end(), std::string{}), args.end());
     try {
-        detail::remove_quotes(args);
+        bool allow_escape = (parse_flags &disable_escape_sequences)==0U;
+        detail::remove_quotes(args,allow_escape);
     } catch(const std::invalid_argument &arg) {
         throw CLI::ParseError(arg.what(), CLI::ExitCodes::InvalidError);
     }
@@ -586,8 +587,8 @@ CLI11_INLINE void App::parse(std::string commandline, bool program_name_included
     parse(std::move(args));
 }
 
-CLI11_INLINE void App::parse(std::wstring commandline, bool program_name_included) {
-    parse(narrow(commandline), program_name_included);
+CLI11_INLINE void App::parse(std::wstring commandline, std::uint32_t parse_flags) {
+    parse(narrow(commandline), parse_flags);
 }
 
 CLI11_INLINE void App::parse(std::vector<std::string> &args) {

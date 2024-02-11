@@ -254,6 +254,8 @@ class App {
     /// This is potentially useful as a modifier subcommand
     bool silent_{false};
 
+   
+
     /// Counts the number of times this command/subcommand was parsed
     std::uint32_t parsed_{0U};
 
@@ -857,13 +859,30 @@ class App {
     template <class CharT> void parse_char_t(int argc, const CharT *const *argv);
 
   public:
-    /// Parse a single string as if it contained command line arguments.
-    /// This function splits the string into arguments then calls parse(std::vector<std::string> &)
-    /// the function takes an optional boolean argument specifying if the programName is included in the string to
-    /// process
-    void parse(std::string commandline, bool program_name_included = false);
-    void parse(std::wstring commandline, bool program_name_included = false);
-
+      /// @brief options for the single string parsing
+      enum parse_option_flags: std::uint32_t
+      {
+          program_name=0x01,
+          disable_escape_sequences=0x02
+      };
+      /// Parse a single string as if it contained command line arguments.
+      /// This function splits the string into arguments then calls parse(std::vector<std::string> &)
+      /// the function takes an optional flag argument allowing modifiers to tweak the parsing operation
+      /// including whether the program name is included or to disable processing of escape sequences in strings
+      /// see @ref parse_option_flags
+      /// @param commandline single string containing command line arguments
+      /// @param program_name_included flag options to modify operations can be ored together
+      void parse(std::string commandline, std::uint32_t parse_flags = 0x00U);
+      void parse(std::wstring commandline, std::uint32_t parse_flags = 0x00U);
+    /// @brief deprecated overloads for single string parsing with bool for program_name_included
+      void parse(std::string commandline, bool program_name_included) {
+          parse(commandline, program_name_included?program_name:0x00U);
+    }
+    void parse(std::wstring commandline, bool program_name_included) {
+        parse(commandline,  program_name_included?program_name:0x00U);
+    }
+    
+   
     /// The real work is done here. Expects a reversed vector.
     /// Changes the vector to the remaining options.
     void parse(std::vector<std::string> &args);

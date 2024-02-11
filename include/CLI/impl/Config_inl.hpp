@@ -118,7 +118,7 @@ CLI11_INLINE std::string ini_join(const std::vector<std::string> &args,
 }
 
 CLI11_INLINE std::vector<std::string>
-generate_parents(const std::string &section, std::string &name, char parentSeparator) {
+generate_parents(const std::string &section, std::string &name, char parentSeparator,bool allow_escape_sequences) {
     std::vector<std::string> parents;
     if(detail::to_lower(section) != "default") {
         if(section.find(parentSeparator) != std::string::npos) {
@@ -135,7 +135,7 @@ generate_parents(const std::string &section, std::string &name, char parentSepar
     }
     // clean up quotes on the parents
     try {
-        detail::remove_quotes(parents);
+        detail::remove_quotes(parents,allow_escape_sequences);    
     } catch(const std::invalid_argument &iarg) {
         throw CLI::ParseError(iarg.what(), CLI::ExitCodes::InvalidError);
     }
@@ -143,10 +143,10 @@ generate_parents(const std::string &section, std::string &name, char parentSepar
 }
 
 CLI11_INLINE void
-checkParentSegments(std::vector<ConfigItem> &output, const std::string &currentSection, char parentSeparator) {
+checkParentSegments(std::vector<ConfigItem> &output, const std::string &currentSection, char parentSeparator,bool allow_escape_sequences) {
 
     std::string estring;
-    auto parents = detail::generate_parents(currentSection, estring, parentSeparator);
+    auto parents = detail::generate_parents(currentSection, estring, parentSeparator,allow_escape_sequences);
     if(!output.empty() && output.back().name == "--") {
         std::size_t msize = (parents.size() > 1U) ? parents.size() : 2;
         while(output.back().parents.size() >= msize) {
@@ -247,7 +247,7 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
             if(currentSection != "default") {
                 // insert a section end which is just an empty items_buffer
                 output.emplace_back();
-                output.back().parents = detail::generate_parents(currentSection, name, parentSeparatorChar);
+                output.back().parents = detail::generate_parents(currentSection, name, parentSeparatorChar,!disableEscapeHandling_);
                 output.back().name = "--";
             }
             currentSection = line.substr(1, len - 2);
@@ -258,7 +258,7 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
             if(detail::to_lower(currentSection) == "default") {
                 currentSection = "default";
             } else {
-                detail::checkParentSegments(output, currentSection, parentSeparatorChar);
+                detail::checkParentSegments(output, currentSection, parentSeparatorChar,!disableEscapeHandling_);
             }
             inSection = false;
             if(currentSection == previousSection) {
@@ -388,11 +388,11 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
         }
         std::vector<std::string> parents;
         try {
-            parents = detail::generate_parents(currentSection, name, parentSeparatorChar);
-            detail::process_quoted_string(name);
+            parents = detail::generate_parents(currentSection, name, parentSeparatorChar,!disableEscapeHandling_);
+            detail::process_quoted_string(name,'"','\'',!disableEscapeHandling_);
             // clean up quotes on the items and check for escaped strings
             for(auto &it : items_buffer) {
-                detail::process_quoted_string(it, stringQuote, literalQuote);
+                detail::process_quoted_string(it, stringQuote, literalQuote,!disableEscapeHandling_);
             }
         } catch(const std::invalid_argument &ia) {
             throw CLI::ParseError(ia.what(), CLI::ExitCodes::InvalidError);
@@ -424,7 +424,7 @@ inline std::vector<ConfigItem> ConfigBase::from_config(std::istream &input) cons
         // insert a section end which is just an empty items_buffer
         std::string ename;
         output.emplace_back();
-        output.back().parents = detail::generate_parents(currentSection, ename, parentSeparatorChar);
+        output.back().parents = detail::generate_parents(currentSection, ename, parentSeparatorChar,!disableEscapeHandling_);
         output.back().name = "--";
         while(output.back().parents.size() > 1) {
             output.push_back(output.back());

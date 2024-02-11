@@ -39,10 +39,10 @@ std::string ini_join(const std::vector<std::string> &args,
 
 void clean_name_string(std::string &name, const std::string &keyChars);
 
-std::vector<std::string> generate_parents(const std::string &section, std::string &name, char parentSeparator);
+std::vector<std::string> generate_parents(const std::string &section, std::string &name, char parentSeparator, bool allow_escape_sequences);
 
 /// assuming non default segments do a check on the close and open of the segments in a configItem structure
-void checkParentSegments(std::vector<ConfigItem> &output, const std::string &currentSection, char parentSeparator);
+void checkParentSegments(std::vector<ConfigItem> &output, const std::string &currentSection, char parentSeparator, bool allow_escape_sequences);
 }  // namespace detail
 
 // [CLI11:config_hpp:end]

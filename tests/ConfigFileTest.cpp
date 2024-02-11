@@ -651,8 +651,8 @@ TEST_CASE_METHOD(TApp, "IniSuccessOnUnknownOption", "[config]") {
 
     {
         std::ofstream out{tmpini};
-        out << "three=3" << '\n';
-        out << "two=99" << '\n';
+        out << "three=3\n";
+        out << "two=99\n";
     }
 
     int two{0};
@@ -672,7 +672,7 @@ TEST_CASE_METHOD(TApp, "IniGetRemainingOption", "[config]") {
     {
         std::ofstream out{tmpini};
         out << ExtraOption << "=" << ExtraOptionValue << '\n';
-        out << "two=99" << '\n';
+        out << "two=99\n";
     }
 
     int two{0};
@@ -1830,6 +1830,42 @@ TEST_CASE_METHOD(TApp, "IniSubcommandConfigurableInQuotesAlias", "[config]") {
     subcom->configurable();
     subcom->add_option("--val", two);
     auto *subsubcom = subcom->add_subcommand("subsubcom")->alias("sub\tsub\t.com");
+    subsubcom->add_option("--val", three);
+
+    run();
+
+    CHECK(one == 1);
+    CHECK(two == 2);
+    CHECK(three == 3);
+
+    CHECK(1U == subcom->count());
+    CHECK(*subcom);
+    CHECK(app.got_subcommand(subcom));
+}
+
+
+TEST_CASE_METHOD(TApp, "IniSubcommandConfigurableInQuotesAliasNoEscapeProcessing", "[config]") {
+
+    TempFile tmpini{"TestIniTmp.ini"};
+
+    app.set_config("--config", tmpini);
+
+    {
+        std::ofstream out{tmpini};
+        out << "[default]" << '\n';
+        out << "val=1" << '\n';
+        out << "[subcom]" << '\n';
+        out << "val=2" << '\n';
+        out << R"("sub\tsub\t.com".'val'=3)" << '\n';
+    }
+
+    int one{0}, two{0}, three{0};
+    app.add_option("--val", one);
+    app.get_config_formatter_base()->disableEscapeHandling();
+    auto *subcom = app.add_subcommand("subcom");
+    subcom->configurable();
+    subcom->add_option("--val", two);
+    auto *subsubcom = subcom->add_subcommand("subsubcom")->alias(R"(sub\tsub\t.com)");
     subsubcom->add_option("--val", three);
 
     run();

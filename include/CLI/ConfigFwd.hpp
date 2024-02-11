@@ -98,6 +98,8 @@ class ConfigBase : public Config {
     uint8_t maximumLayers{255};
     /// the separator used to separator parent layers
     char parentSeparatorChar{'.'};
+    /// disable escape sequence processing
+    bool disableEscapeHandling_{false};
     /// Specify the configuration index to use for arrayed sections
     int16_t configIndex{-1};
     /// Specify the configuration section that should be used
@@ -164,6 +166,8 @@ class ConfigBase : public Config {
         configIndex = sectionIndex;
         return this;
     }
+    /// disable processing of escape sequences
+    ConfigBase *disableEscapeHandling(bool val=true){disableEscapeHandling_=val; return this;}
 };
 
 /// the default Config is the TOML file format
