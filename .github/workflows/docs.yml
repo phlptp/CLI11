@@ -20,13 +20,13 @@ jobs:
   apidocs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: mattnotmitt/doxygen-action@v1
         with:
           doxyfile-path: ./docs/Doxyfile
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: api-docs
           path: html
@@ -34,9 +34,9 @@ jobs:
   gitbook:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 16
 
@@ -56,7 +56,7 @@ jobs:
           npx gitbook build . public
           npx gitbook pdf . public/cli11.pdf
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: gitbook
           path: book/public
@@ -75,17 +75,17 @@ jobs:
       - uses: actions/configure-pages@v5
         id: pages
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: api-docs
           path: _site
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: gitbook
           path: _site/book
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
 
       - uses: actions/deploy-pages@v4
         id: deployment
