@@ -25,7 +25,7 @@ jobs:
         std: ["14", "17", "20", "23"]
         precompile: ["ON", "OFF"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -68,7 +68,7 @@ jobs:
     name: Preset
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run CMake Workflow
         run: cmake --workflow default
@@ -78,7 +78,7 @@ jobs:
     name: Catch 2 3.x
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get Catch 2
         run: brew install catch2
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     container: silkeh/clang:20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install requirements
         run: apt-get update && apt-get install -y ninja-build
@@ -121,7 +121,7 @@ jobs:
     steps:
       - name: Add build tools
         run: apt-get update && apt-get install -y wget git cmake
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -136,7 +136,7 @@ jobs:
     steps:
       - name: Add build tools
         run: apt-get update && apt-get install -y wget git cmake
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -148,7 +148,7 @@ jobs:
     name: Boost build
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Add boost
@@ -167,7 +167,7 @@ jobs:
     name: sanitizer build
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       # this build step will fail
@@ -183,7 +183,7 @@ jobs:
     name: Meson build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Prepare commands
         run: |
@@ -203,7 +203,7 @@ jobs:
     name: Bazel build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build
         run: bazel build //...
@@ -215,7 +215,7 @@ jobs:
     name: install tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -232,7 +232,7 @@ jobs:
     name: install tests precompiled
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -249,7 +249,7 @@ jobs:
     name: install tests precompiled full install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -268,7 +268,7 @@ jobs:
     name: install tests precompiled macos
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -285,7 +285,7 @@ jobs:
     name: install tests precompiled macos no validators
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -302,7 +302,7 @@ jobs:
     name: install tests single file
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Configure
@@ -320,7 +320,7 @@ jobs:
     runs-on: ubuntu-latest
     container: gcc:15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - uses: ./.github/actions/quick_cmake
@@ -350,7 +350,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libc++-20-dev libc++abi-20-dev lld-20
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - uses: ./.github/actions/quick_cmake
@@ -371,7 +371,7 @@ jobs:
     name: CMake config check (Ubuntu 22.04)
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check CMake 3.14
         uses: ./.github/actions/quick_cmake
@@ -395,7 +395,7 @@ jobs:
     name: CMake config check (Ubuntu 24.04)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check CMake 3.17
         uses: ./.github/actions/quick_cmake
